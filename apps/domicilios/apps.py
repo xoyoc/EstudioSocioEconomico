@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class DomiciliosConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'apps.domicilios'
+    verbose_name = 'Domicilios'
