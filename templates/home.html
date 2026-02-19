@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}Inicio — Estudio Socioeconómico{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <h1 class="text-3xl font-bold text-gray-800 mb-4">Bienvenido, {{ user.get_full_name|default:user.username }}</h1>
+    <p class="text-gray-600">Panel principal del sistema de estudios socioeconómicos.</p>
+</div>
+{% endblock %}
