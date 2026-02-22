@@ -1,8 +1,10 @@
-{# Componente: badge_estado.html
+{% comment %}
+ {# Componente: badge_estado.html
    Uso: {% include 'components/badge_estado.html' with estado=estudio.estado %}
    Variable requerida: estado — código de 3 letras del campo EstudioSocioeconomico.estado
    Códigos válidos: BOR, VIS, PRO, COM, REV, APR, REC, CAN
 #}
+{% endcomment %}
 {% if estado == 'BOR' %}
   <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700 border border-gray-300">
     Borrador

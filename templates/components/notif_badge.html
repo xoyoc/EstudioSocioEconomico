@@ -1,3 +1,4 @@
+{% comment %}
 {# Componente: notif_badge.html
    Uso: {% include 'components/notif_badge.html' with notif_count=notificaciones_no_leidas %}
    Variable requerida: notif_count — entero con la cantidad de notificaciones no leídas
@@ -14,6 +15,7 @@
        {% include 'components/notif_badge.html' with notif_count=notif_count %}
      </div>
 #}
+{% endcomment %}
 <a href="{% url 'notificaciones:notificacion_list' %}"
    class="relative inline-flex items-center p-2 text-gray-500 hover:text-purple-600 rounded-md hover:bg-purple-50 transition-colors"
    title="{% if notif_count %}{{ notif_count }} notificación{% if notif_count != 1 %}es{% endif %} sin leer{% else %}Notificaciones{% endif %}"

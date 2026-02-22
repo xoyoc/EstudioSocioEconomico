@@ -1,9 +1,11 @@
-{# Componente: form_field.html
+{% comment %}
+ {# Componente: form_field.html
    Uso: {% include 'components/form_field.html' with field=form.nombre %}
    Variable requerida: field — campo BoundField de un formulario Django
    Muestra: label, widget con clases Tailwind y mensajes de error
    El campo adopta estilos de error (borde rojo) cuando tiene errores de validación
 #}
+{% endcomment %}
 <div class="mb-4">
   {# Label #}
   <label for="{{ field.id_for_label }}"
