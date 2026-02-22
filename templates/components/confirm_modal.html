@@ -1,3 +1,4 @@
+{% comment %}
 {# Componente: confirm_modal.html
    Uso:
      {% include 'components/confirm_modal.html' with
@@ -21,7 +22,7 @@
      document.getElementById('<modal_id>-overlay').classList.remove('hidden')
    O con un botón que tenga: onclick="openModal('{{ modal_id }}')"
 #}
-
+{% endcomment %}
 <!-- Overlay del modal: {{ modal_id }} -->
 <div id="{{ modal_id }}-overlay"
      class="fixed inset-0 z-50 hidden"

@@ -1,8 +1,10 @@
+{% comment %}
 {# Componente: pagination.html
    Uso: {% include 'components/pagination.html' with page_obj=page_obj %}
    Variable requerida: page_obj — objeto Page de Django (Paginator)
    Muestra: navegación anterior/siguiente, números de página con elipsis, contador de resultados
 #}
+{% endcomment %}
 {% if page_obj.paginator.num_pages > 1 %}
 <nav class="flex flex-col sm:flex-row items-center justify-between gap-3 mt-6 pt-4 border-t border-gray-200"
      aria-label="Paginación">

@@ -317,11 +317,7 @@
     </table>
   </div>
   {% else %}
-  {% include 'components/empty_state.html' with
-      empty_title="Sin estudios"
-      empty_message="Esta persona no tiene estudios socioeconómicos registrados."
-      empty_action_url=""
-  %}
+  {% include 'components/empty_state.html' with empty_title="Sin estudios" empty_message="Esta persona no tiene estudios socioeconómicos registrados." %}
   {% endif %}
   {% endwith %}
 </div>
@@ -367,10 +363,7 @@
     {% endfor %}
   </div>
   {% else %}
-  {% include 'components/empty_state.html' with
-      empty_title="Sin domicilios"
-      empty_message="No hay domicilios registrados para esta persona."
-  %}
+  {% include 'components/empty_state.html' with empty_title="Sin domicilios" empty_message="No hay domicilios registrados para esta persona." %}
   {% endif %}
   {% endwith %}
 </div>
@@ -437,10 +430,7 @@
     </table>
   </div>
   {% else %}
-  {% include 'components/empty_state.html' with
-      empty_title="Sin documentos"
-      empty_message="No hay documentos cargados para esta persona."
-  %}
+  {% include 'components/empty_state.html' with empty_title="Sin documentos" empty_message="No hay documentos cargados para esta persona." %}
   {% endif %}
   {% endwith %}
 </div>

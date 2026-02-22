@@ -1,3 +1,4 @@
+{% comment %}
 {# Componente: card_persona.html
    Uso: {% include 'components/card_persona.html' with persona=persona %}
    Variable requerida: persona — instancia del modelo apps.personas.models.Persona
@@ -14,6 +15,7 @@
          Para la edad exacta se recomienda calcularla en la vista y pasarla
          como persona.edad si se agrega como property al modelo.
 #}
+{% endcomment %}
 {% load static %}
 
 <div class="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-purple-300 transition-all overflow-hidden">
