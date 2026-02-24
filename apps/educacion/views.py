@@ -61,6 +61,19 @@ class EducacionCreateView(LoginRequiredMixin, CreateView):
     ]
     success_url = reverse_lazy('educacion:educacion_list')
 
+    def get_initial(self):
+        initial = super().get_initial()
+        persona_pk = self.request.GET.get('persona')
+        if persona_pk:
+            initial['persona'] = persona_pk
+        return initial
+
+    def get_success_url(self):
+        back = self.request.GET.get('back')
+        if back:
+            return reverse_lazy('estudios:estudio_detail', kwargs={'pk': back})
+        return super().get_success_url()
+
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         form.instance.updated_by = self.request.user

@@ -1,0 +1,433 @@
+{% extends "candidato/base_candidato.html" %}
+
+{% block title %}Paso 1: Datos personales — Portal del Candidato{% endblock %}
+
+{% block content %}
+<h2 class="text-lg font-bold text-gray-900 mb-1">Datos personales</h2>
+<p class="text-sm text-gray-500 mb-5">Llena tu información personal. Los campos marcados con * son obligatorios.</p>
+
+<form method="post" action="{% url 'candidato:paso' token.token 1 %}" novalidate>
+  {% csrf_token %}
+
+  <!-- Errores generales del formulario -->
+  {% if form.non_field_errors %}
+  <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+    {% for error in form.non_field_errors %}
+    <p class="text-sm text-red-700">{{ error }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- SECCIÓN: Datos básicos -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Datos básicos
+    </h3>
+    <div class="space-y-4">
+
+      <div>
+        <label for="{{ form.nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Nombre(s) *
+        </label>
+        <input type="text" name="{{ form.nombre.html_name }}" id="{{ form.nombre.id_for_label }}"
+               value="{{ form.nombre.value|default:'' }}"
+               placeholder="Ej: María José"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.nombre.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.nombre.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.apellido_paterno.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Apellido paterno *
+        </label>
+        <input type="text" name="{{ form.apellido_paterno.html_name }}" id="{{ form.apellido_paterno.id_for_label }}"
+               value="{{ form.apellido_paterno.value|default:'' }}"
+               placeholder="Ej: González"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.apellido_paterno.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.apellido_paterno.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.apellido_materno.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Apellido materno
+        </label>
+        <input type="text" name="{{ form.apellido_materno.html_name }}" id="{{ form.apellido_materno.id_for_label }}"
+               value="{{ form.apellido_materno.value|default:'' }}"
+               placeholder="Ej: Ramírez"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form.apellido_materno.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.apellido_materno.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.fecha_nacimiento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Fecha de nacimiento *
+        </label>
+        <input type="date" name="{{ form.fecha_nacimiento.html_name }}" id="{{ form.fecha_nacimiento.id_for_label }}"
+               value="{{ form.fecha_nacimiento.value|default:'' }}"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.fecha_nacimiento.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.fecha_nacimiento.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.lugar_nacimiento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Lugar de nacimiento
+        </label>
+        <input type="text" name="{{ form.lugar_nacimiento.html_name }}" id="{{ form.lugar_nacimiento.id_for_label }}"
+               value="{{ form.lugar_nacimiento.value|default:'' }}"
+               placeholder="Ej: Monterrey, Nuevo León"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form.lugar_nacimiento.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.lugar_nacimiento.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Identificaciones -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Identificaciones
+    </h3>
+    <div class="space-y-4">
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="{{ form.tipo_identificacion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Tipo de identificación
+          </label>
+          <select name="{{ form.tipo_identificacion.html_name }}" id="{{ form.tipo_identificacion.id_for_label }}"
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 bg-white transition-colors
+                         {% if form.tipo_identificacion.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+            <option value="">-- Selecciona --</option>
+            {% for val, label in form.tipo_identificacion.field.choices %}
+            <option value="{{ val }}" {% if form.tipo_identificacion.value == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% for error in form.tipo_identificacion.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.numero_identificacion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            No. de identificación
+          </label>
+          <input type="text" name="{{ form.numero_identificacion.html_name }}" id="{{ form.numero_identificacion.id_for_label }}"
+                 value="{{ form.numero_identificacion.value|default:'' }}"
+                 placeholder="Número o folio"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                        {% if form.numero_identificacion.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+          {% for error in form.numero_identificacion.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <label for="{{ form.curp.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          CURP
+        </label>
+        <input type="text" name="{{ form.curp.html_name }}" id="{{ form.curp.id_for_label }}"
+               value="{{ form.curp.value|default:'' }}"
+               placeholder="18 caracteres"
+               maxlength="18"
+               class="block w-full px-4 py-3 text-base font-mono border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 uppercase transition-colors
+                      {% if form.curp.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.curp.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.rfc.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          RFC
+        </label>
+        <input type="text" name="{{ form.rfc.html_name }}" id="{{ form.rfc.id_for_label }}"
+               value="{{ form.rfc.value|default:'' }}"
+               placeholder="13 caracteres con homoclave"
+               maxlength="13"
+               class="block w-full px-4 py-3 text-base font-mono border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 uppercase transition-colors
+                      {% if form.rfc.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.rfc.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.nss.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          NSS (Número de Seguridad Social)
+        </label>
+        <input type="text" name="{{ form.nss.html_name }}" id="{{ form.nss.id_for_label }}"
+               value="{{ form.nss.value|default:'' }}"
+               placeholder="11 dígitos"
+               maxlength="11"
+               class="block w-full px-4 py-3 text-base font-mono border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form.nss.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.nss.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
+          <label for="{{ form.licencia_manejo_folio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Folio licencia de manejo
+          </label>
+          <input type="text" name="{{ form.licencia_manejo_folio.html_name }}" id="{{ form.licencia_manejo_folio.id_for_label }}"
+                 value="{{ form.licencia_manejo_folio.value|default:'' }}"
+                 placeholder="Opcional"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+          {% for error in form.licencia_manejo_folio.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.cartilla_militar_folio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Folio cartilla militar
+          </label>
+          <input type="text" name="{{ form.cartilla_militar_folio.html_name }}" id="{{ form.cartilla_militar_folio.id_for_label }}"
+                 value="{{ form.cartilla_militar_folio.value|default:'' }}"
+                 placeholder="Opcional"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+          {% for error in form.cartilla_militar_folio.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <label for="{{ form.acta_nacimiento_numero.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          No. de acta de nacimiento
+        </label>
+        <input type="text" name="{{ form.acta_nacimiento_numero.html_name }}" id="{{ form.acta_nacimiento_numero.id_for_label }}"
+               value="{{ form.acta_nacimiento_numero.value|default:'' }}"
+               placeholder="Número de acta"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form.acta_nacimiento_numero.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.acta_nacimiento_numero.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Contacto -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Datos de contacto
+    </h3>
+    <div class="space-y-4">
+
+      <div>
+        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Correo electrónico *
+        </label>
+        <input type="email" name="{{ form.email.html_name }}" id="{{ form.email.id_for_label }}"
+               value="{{ form.email.value|default:'' }}"
+               placeholder="tucorreo@ejemplo.com"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.email.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.email.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.telefono_movil.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Teléfono celular *
+        </label>
+        <input type="tel" name="{{ form.telefono_movil.html_name }}" id="{{ form.telefono_movil.id_for_label }}"
+               value="{{ form.telefono_movil.value|default:'' }}"
+               placeholder="10 dígitos"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.telefono_movil.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.telefono_movil.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.telefono_fijo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Teléfono fijo
+        </label>
+        <input type="tel" name="{{ form.telefono_fijo.html_name }}" id="{{ form.telefono_fijo.id_for_label }}"
+               value="{{ form.telefono_fijo.value|default:'' }}"
+               placeholder="10 dígitos (con lada)"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.telefono_fijo.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.facebook_perfil.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Perfil de Facebook
+        </label>
+        <input type="text" name="{{ form.facebook_perfil.html_name }}" id="{{ form.facebook_perfil.id_for_label }}"
+               value="{{ form.facebook_perfil.value|default:'' }}"
+               placeholder="URL o nombre de usuario"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.facebook_perfil.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Estado civil -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Estado civil
+    </h3>
+    <div class="space-y-4">
+
+      <div>
+        <label for="{{ form.estado_civil.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Estado civil *
+        </label>
+        <select name="{{ form.estado_civil.html_name }}" id="{{ form.estado_civil.id_for_label }}"
+                class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 bg-white transition-colors
+                       {% if form.estado_civil.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+          <option value="">-- Selecciona --</option>
+          {% for val, label in form.estado_civil.field.choices %}
+          <option value="{{ val }}" {% if form.estado_civil.value == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% for error in form.estado_civil.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.numero_dependientes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Número de dependientes económicos
+        </label>
+        <input type="number" name="{{ form.numero_dependientes.html_name }}" id="{{ form.numero_dependientes.id_for_label }}"
+               value="{{ form.numero_dependientes.value|default:'0' }}"
+               min="0" max="20"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.numero_dependientes.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Datos físicos -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Datos físicos
+    </h3>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="{{ form.peso.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Peso (kg)
+        </label>
+        <input type="number" name="{{ form.peso.html_name }}" id="{{ form.peso.id_for_label }}"
+               value="{{ form.peso.value|default:'' }}"
+               placeholder="Ej: 70"
+               min="30" max="250" step="0.1"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form.peso.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.peso.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.estatura.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Estatura (cm)
+        </label>
+        <input type="number" name="{{ form.estatura.html_name }}" id="{{ form.estatura.id_for_label }}"
+               value="{{ form.estatura.value|default:'' }}"
+               placeholder="Ej: 170"
+               min="100" max="250"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form.estatura.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        {% for error in form.estatura.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Historial personal -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Historial personal
+    </h3>
+    <div class="space-y-4">
+
+      <div>
+        <label for="{{ form.historial_residencias.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Historial de residencias anteriores
+        </label>
+        <textarea name="{{ form.historial_residencias.html_name }}" id="{{ form.historial_residencias.id_for_label }}"
+                  rows="3" placeholder="Menciona los lugares donde has vivido en los últimos 5 años..."
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form.historial_residencias.value|default:'' }}</textarea>
+        {% for error in form.historial_residencias.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.periodos_sin_laborar.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Periodos sin trabajar
+        </label>
+        <textarea name="{{ form.periodos_sin_laborar.html_name }}" id="{{ form.periodos_sin_laborar.id_for_label }}"
+                  rows="2" placeholder="¿Has tenido periodos sin trabajar? Explica brevemente..."
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form.periodos_sin_laborar.value|default:'' }}</textarea>
+        {% for error in form.periodos_sin_laborar.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.actividades_tiempo_libre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Actividades en tiempo libre
+        </label>
+        <textarea name="{{ form.actividades_tiempo_libre.html_name }}" id="{{ form.actividades_tiempo_libre.id_for_label }}"
+                  rows="2" placeholder="Hobbies, deportes, voluntariado..."
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form.actividades_tiempo_libre.value|default:'' }}</textarea>
+        {% for error in form.actividades_tiempo_libre.errors %}
+        <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Botón de envío -->
+  <button type="submit"
+          class="block w-full py-4 px-6 text-center text-white text-base font-bold rounded-2xl shadow-md transition-all active:scale-95"
+          style="background-color: var(--meraki-purple);"
+          onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+          onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+    Guardar y continuar
+    <svg class="inline-block h-5 w-5 ml-1.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+    </svg>
+  </button>
+
+  <p class="text-center text-xs text-gray-400 mt-3">Paso 1 de {{ total_pasos }}</p>
+
+</form>
+{% endblock %}

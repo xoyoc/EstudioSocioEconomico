@@ -1,0 +1,370 @@
+{% extends "candidato/base_candidato.html" %}
+
+{% block title %}Paso 5: Situación económica — Portal del Candidato{% endblock %}
+
+{% block content %}
+<h2 class="text-lg font-bold text-gray-900 mb-1">Situación económica</h2>
+<p class="text-sm text-gray-500 mb-5">Información sobre tus ingresos, gastos y patrimonio.</p>
+
+<form method="post" action="{% url 'candidato:paso' token.token 5 %}" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+    {% for error in form.non_field_errors %}<p class="text-sm text-red-700">{{ error }}</p>{% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- SECCIÓN: Percepción general -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      ¿Cómo describes tu situación económica?
+    </h3>
+    <div class="space-y-2">
+      {% for val, label in form.situacion_economica_percibida.field.choices %}
+      <label class="flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors
+                    {% if form.situacion_economica_percibida.value == val %}border-purple-400 bg-purple-50{% else %}border-gray-200 hover:border-purple-200 hover:bg-purple-50{% endif %}">
+        <input type="radio" name="{{ form.situacion_economica_percibida.html_name }}"
+               value="{{ val }}"
+               {% if form.situacion_economica_percibida.value == val %}checked{% endif %}
+               class="h-4 w-4 flex-shrink-0"
+               style="accent-color: var(--meraki-purple);">
+        <span class="text-sm text-gray-700">{{ label }}</span>
+      </label>
+      {% endfor %}
+    </div>
+    {% for error in form.situacion_economica_percibida.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+  </div>
+
+  <!-- SECCIÓN: Ingresos mensuales -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-1 pb-2 border-b border-gray-100">
+      Ingresos mensuales
+    </h3>
+    <p class="text-xs text-gray-400 mb-4">Ingresa cantidades en pesos mexicanos. Pon 0 si no aplica.</p>
+    <div class="space-y-3">
+
+      {% for field in form %}
+      {% if field.html_name == 'salario_mensual' or field.html_name == 'bonos_comisiones' or field.html_name == 'ingresos_extra' or field.html_name == 'apoyo_familiar' or field.html_name == 'otros_ingresos' %}
+      <div class="flex items-center gap-3">
+        <label for="{{ field.id_for_label }}" class="flex-1 text-sm text-gray-700">{{ field.label }}</label>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <span class="text-sm text-gray-400 font-medium">$</span>
+          <input type="number" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                 value="{{ field.value|default:'0' }}"
+                 min="0" step="0.01" placeholder="0.00"
+                 class="w-28 px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 text-right transition-colors
+                        {% if field.errors %}border-red-400 bg-red-50{% endif %}">
+        </div>
+      </div>
+      {% for error in field.errors %}<p class="text-xs text-red-600 text-right">{{ error }}</p>{% endfor %}
+      {% endif %}
+      {% endfor %}
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Egresos mensuales -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-1 pb-2 border-b border-gray-100">
+      Gastos mensuales
+    </h3>
+    <p class="text-xs text-gray-400 mb-4">Estimados en pesos mexicanos.</p>
+    <div class="space-y-3">
+
+      {% for field in form %}
+      {% if field.html_name == 'gasto_alimentacion' or field.html_name == 'gasto_vivienda' or field.html_name == 'gasto_servicios' or field.html_name == 'gasto_transporte' or field.html_name == 'gasto_educacion' or field.html_name == 'gasto_salud' or field.html_name == 'gasto_deudas' or field.html_name == 'otros_gastos' %}
+      <div class="flex items-center gap-3">
+        <label for="{{ field.id_for_label }}" class="flex-1 text-sm text-gray-700">{{ field.label }}</label>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <span class="text-sm text-gray-400 font-medium">$</span>
+          <input type="number" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+                 value="{{ field.value|default:'0' }}"
+                 min="0" step="0.01" placeholder="0.00"
+                 class="w-28 px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 text-right transition-colors
+                        {% if field.errors %}border-red-400 bg-red-50{% endif %}">
+        </div>
+      </div>
+      {% for error in field.errors %}<p class="text-xs text-red-600 text-right">{{ error }}</p>{% endfor %}
+      {% endif %}
+      {% endfor %}
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Automóvil -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Vehículo propio
+    </h3>
+
+    <!-- Toggle tiene_automovil -->
+    <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition-colors mb-4">
+      <input type="checkbox" name="tiene_automovil" id="id_tiene_automovil"
+             {% if form.tiene_automovil.value %}checked{% endif %}
+             class="h-5 w-5 rounded flex-shrink-0"
+             style="accent-color: var(--meraki-purple);"
+             onchange="toggleAutomovil(this.checked)">
+      <div>
+        <span class="text-sm font-medium text-gray-800">Tengo automóvil propio</span>
+        <p class="text-xs text-gray-500">Marca si cuentas con vehículo</p>
+      </div>
+    </label>
+
+    <!-- Campos de automóvil (condicionales) -->
+    <div id="campos-automovil" class="space-y-4 {% if not form.tiene_automovil.value %}hidden{% endif %}">
+
+      <div>
+        <label for="{{ form.automovil_marca_modelo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Marca y modelo
+        </label>
+        <input type="text" name="{{ form.automovil_marca_modelo.html_name }}" id="{{ form.automovil_marca_modelo.id_for_label }}"
+               value="{{ form.automovil_marca_modelo.value|default:'' }}"
+               placeholder="Ej: Nissan Versa"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.automovil_marca_modelo.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.automovil_anio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Año
+          </label>
+          <input type="number" name="{{ form.automovil_anio.html_name }}" id="{{ form.automovil_anio.id_for_label }}"
+                 value="{{ form.automovil_anio.value|default:'' }}"
+                 placeholder="Ej: 2018" min="1970" max="2030"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+          {% for error in form.automovil_anio.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label for="{{ form.automovil_valor_comercial.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Valor aprox. ($)
+          </label>
+          <input type="number" name="{{ form.automovil_valor_comercial.html_name }}" id="{{ form.automovil_valor_comercial.id_for_label }}"
+                 value="{{ form.automovil_valor_comercial.value|default:'' }}"
+                 placeholder="0.00" min="0" step="0.01"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+          {% for error in form.automovil_valor_comercial.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <!-- Checkbox: con adeudo -->
+      {% if form.automovil_con_adeudo %}
+      <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-yellow-50 transition-colors">
+        <input type="checkbox" name="{{ form.automovil_con_adeudo.html_name }}" id="{{ form.automovil_con_adeudo.id_for_label }}"
+               {% if form.automovil_con_adeudo.value %}checked{% endif %}
+               class="h-5 w-5 rounded flex-shrink-0"
+               style="accent-color: var(--meraki-purple);">
+        <div>
+          <span class="text-sm font-medium text-gray-800">El vehículo tiene adeudo o está a crédito</span>
+        </div>
+      </label>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Patrimonio inmobiliario -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Patrimonio inmobiliario
+    </h3>
+    <div class="space-y-4">
+      {% if form.patrimonio_inmobiliario %}
+      <div>
+        <label for="{{ form.patrimonio_inmobiliario.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Valor de inmuebles propios ($)
+        </label>
+        <input type="number" name="{{ form.patrimonio_inmobiliario.html_name }}" id="{{ form.patrimonio_inmobiliario.id_for_label }}"
+               value="{{ form.patrimonio_inmobiliario.value|default:'' }}"
+               placeholder="0.00" min="0" step="0.01"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.patrimonio_inmobiliario.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+      {% if form.descripcion_patrimonio %}
+      <div>
+        <label for="{{ form.descripcion_patrimonio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Descripción del patrimonio
+        </label>
+        <textarea name="{{ form.descripcion_patrimonio.html_name }}" id="{{ form.descripcion_patrimonio.id_for_label }}"
+                  rows="2" placeholder="Describe brevemente tus bienes inmuebles..."
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form.descripcion_patrimonio.value|default:'' }}</textarea>
+        {% for error in form.descripcion_patrimonio.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Banca -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Banca y ahorro
+    </h3>
+    <div class="space-y-4">
+      {% if form.institucion_bancaria %}
+      <div>
+        <label for="{{ form.institucion_bancaria.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Institución bancaria
+        </label>
+        <input type="text" name="{{ form.institucion_bancaria.html_name }}" id="{{ form.institucion_bancaria.id_for_label }}"
+               value="{{ form.institucion_bancaria.value|default:'' }}"
+               placeholder="Ej: BBVA, Banamex, Santander..."
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.institucion_bancaria.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+      {% if form.afore %}
+      <div>
+        <label for="{{ form.afore.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          AFORE
+        </label>
+        <input type="text" name="{{ form.afore.html_name }}" id="{{ form.afore.id_for_label }}"
+               value="{{ form.afore.value|default:'' }}"
+               placeholder="Nombre de tu AFORE"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.afore.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Créditos -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Créditos y adeudos
+    </h3>
+    <div class="space-y-4">
+
+      {% if form.credito_hipotecario %}
+      <div class="flex items-center gap-3">
+        <label for="{{ form.credito_hipotecario.id_for_label }}" class="flex-1 text-sm text-gray-700">Crédito hipotecario ($)</label>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <span class="text-sm text-gray-400">$</span>
+          <input type="number" name="{{ form.credito_hipotecario.html_name }}" id="{{ form.credito_hipotecario.id_for_label }}"
+                 value="{{ form.credito_hipotecario.value|default:'0' }}"
+                 min="0" step="0.01" placeholder="0.00"
+                 class="w-28 px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 text-right transition-colors">
+        </div>
+      </div>
+      {% endif %}
+
+      {% if form.credito_automotriz %}
+      <div class="flex items-center gap-3">
+        <label for="{{ form.credito_automotriz.id_for_label }}" class="flex-1 text-sm text-gray-700">Crédito automotriz ($)</label>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <span class="text-sm text-gray-400">$</span>
+          <input type="number" name="{{ form.credito_automotriz.html_name }}" id="{{ form.credito_automotriz.id_for_label }}"
+                 value="{{ form.credito_automotriz.value|default:'0' }}"
+                 min="0" step="0.01" placeholder="0.00"
+                 class="w-28 px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 text-right transition-colors">
+        </div>
+      </div>
+      {% endif %}
+
+      {% if form.tarjetas_credito %}
+      <div class="flex items-center gap-3">
+        <label for="{{ form.tarjetas_credito.id_for_label }}" class="flex-1 text-sm text-gray-700">Tarjetas de crédito ($)</label>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <span class="text-sm text-gray-400">$</span>
+          <input type="number" name="{{ form.tarjetas_credito.html_name }}" id="{{ form.tarjetas_credito.id_for_label }}"
+                 value="{{ form.tarjetas_credito.value|default:'0' }}"
+                 min="0" step="0.01" placeholder="0.00"
+                 class="w-28 px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 text-right transition-colors">
+        </div>
+      </div>
+      {% endif %}
+
+      {% if form.tarjeta_credito_banco %}
+      <div>
+        <label for="{{ form.tarjeta_credito_banco.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Banco(s) de tarjeta(s) de crédito
+        </label>
+        <input type="text" name="{{ form.tarjeta_credito_banco.html_name }}" id="{{ form.tarjeta_credito_banco.id_for_label }}"
+               value="{{ form.tarjeta_credito_banco.value|default:'' }}"
+               placeholder="Ej: BBVA, Citibanamex..."
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.tarjeta_credito_banco.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if form.tienda_departamental_nombre %}
+      <div>
+        <label for="{{ form.tienda_departamental_nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Tienda departamental con crédito
+        </label>
+        <input type="text" name="{{ form.tienda_departamental_nombre.html_name }}" id="{{ form.tienda_departamental_nombre.id_for_label }}"
+               value="{{ form.tienda_departamental_nombre.value|default:'' }}"
+               placeholder="Ej: Liverpool, Coppel, Elektra..."
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.tienda_departamental_nombre.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      {% if form.tienda_departamental_adeudo %}
+      <div class="flex items-center gap-3">
+        <label for="{{ form.tienda_departamental_adeudo.id_for_label }}" class="flex-1 text-sm text-gray-700">Adeudo tienda departamental ($)</label>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <span class="text-sm text-gray-400">$</span>
+          <input type="number" name="{{ form.tienda_departamental_adeudo.html_name }}" id="{{ form.tienda_departamental_adeudo.id_for_label }}"
+                 value="{{ form.tienda_departamental_adeudo.value|default:'0' }}"
+                 min="0" step="0.01" placeholder="0.00"
+                 class="w-28 px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 text-right transition-colors">
+        </div>
+      </div>
+      {% endif %}
+
+      {% if form.prestamos_personales %}
+      <div class="flex items-center gap-3">
+        <label for="{{ form.prestamos_personales.id_for_label }}" class="flex-1 text-sm text-gray-700">Préstamos personales ($)</label>
+        <div class="flex items-center gap-1 flex-shrink-0">
+          <span class="text-sm text-gray-400">$</span>
+          <input type="number" name="{{ form.prestamos_personales.html_name }}" id="{{ form.prestamos_personales.id_for_label }}"
+                 value="{{ form.prestamos_personales.value|default:'0' }}"
+                 min="0" step="0.01" placeholder="0.00"
+                 class="w-28 px-3 py-2.5 text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 text-right transition-colors">
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- Botones de navegación -->
+  <div class="flex gap-3 mb-4">
+    <a href="{% url 'candidato:paso' token.token 4 %}"
+       class="flex-1 py-4 px-4 text-center text-gray-700 text-base font-semibold rounded-2xl border border-gray-300 bg-white transition-all active:scale-95 hover:bg-gray-50">
+      Anterior
+    </a>
+    <button type="submit"
+            class="flex-1 py-4 px-4 text-center text-white text-base font-bold rounded-2xl shadow-md transition-all active:scale-95"
+            style="background-color: var(--meraki-purple);"
+            onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+            onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+      Guardar y continuar
+    </button>
+  </div>
+  <p class="text-center text-xs text-gray-400">Paso 5 de {{ total_pasos }}</p>
+
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleAutomovil(checked) {
+  var campos = document.getElementById('campos-automovil');
+  if (checked) {
+    campos.classList.remove('hidden');
+  } else {
+    campos.classList.add('hidden');
+    // Limpiar campos cuando se desmarca
+    campos.querySelectorAll('input[type="text"], input[type="number"]').forEach(function(input) {
+      input.value = '';
+    });
+    campos.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+      checkbox.checked = false;
+    });
+  }
+}
+</script>
+{% endblock %}

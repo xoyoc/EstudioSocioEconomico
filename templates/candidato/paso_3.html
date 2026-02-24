@@ -1,0 +1,365 @@
+{% extends "candidato/base_candidato.html" %}
+
+{% block title %}Paso 3: Educación, idiomas y salud — Portal del Candidato{% endblock %}
+
+{% block content %}
+<h2 class="text-lg font-bold text-gray-900 mb-1">Educación, idiomas y salud</h2>
+<p class="text-sm text-gray-500 mb-5">Registra tu formación académica, idiomas y datos de salud.</p>
+
+<!-- ==============================
+     SECCIÓN A: EDUCACIÓN
+     ============================== -->
+<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+  <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+      Educación
+    </h3>
+    {% if educacion_list %}
+    <span class="text-xs text-purple-700 font-semibold bg-purple-50 px-2 py-0.5 rounded-full">
+      {{ educacion_list|length }} registro{{ educacion_list|length|pluralize:"s" }}
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- Lista de educación guardada -->
+  {% if educacion_list %}
+  <div class="space-y-2 mb-4">
+    {% for edu in educacion_list %}
+    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
+      <div class="flex-shrink-0 h-8 w-8 rounded-lg flex items-center justify-center"
+           style="background-color: var(--meraki-purple-light);">
+        <svg class="h-4 w-4" style="color: var(--meraki-purple);" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/>
+        </svg>
+      </div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-medium text-gray-900 truncate">{{ edu.nivel }}</p>
+        <p class="text-xs text-gray-500 truncate">{{ edu.institucion }} — {{ edu.get_estado_display }}</p>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-400 text-center py-3 mb-4">No has agregado educación todavía</p>
+  {% endif %}
+
+  <!-- Formulario para agregar educación -->
+  <form method="post" action="{% url 'candidato:paso' token.token 3 %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="guardar_educacion">
+
+    {% if form_educacion.non_field_errors %}
+    <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-3">
+      {% for error in form_educacion.non_field_errors %}<p class="text-sm text-red-700">{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="space-y-3">
+      <div>
+        <label for="{{ form_educacion.nivel.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Nivel educativo
+        </label>
+        <select name="{{ form_educacion.nivel.html_name }}" id="{{ form_educacion.nivel.id_for_label }}"
+                class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white transition-colors
+                       {% if form_educacion.nivel.errors %}border-red-400{% endif %}">
+          <option value="">-- Selecciona nivel --</option>
+          {% for val, label in form_educacion.nivel.field.choices %}
+          <option value="{{ val }}" {% if form_educacion.nivel.value == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% for error in form_educacion.nivel.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form_educacion.institucion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Institución educativa
+        </label>
+        <input type="text" name="{{ form_educacion.institucion.html_name }}" id="{{ form_educacion.institucion.id_for_label }}"
+               value="{{ form_educacion.institucion.value|default:'' }}"
+               placeholder="Nombre de la escuela o universidad"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form_educacion.institucion.errors %}border-red-400 bg-red-50{% endif %}">
+        {% for error in form_educacion.institucion.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="{{ form_educacion.fecha_inicio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Año de inicio
+          </label>
+          <input type="date" name="{{ form_educacion.fecha_inicio.html_name }}" id="{{ form_educacion.fecha_inicio.id_for_label }}"
+                 value="{{ form_educacion.fecha_inicio.value|default:'' }}"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 transition-colors">
+          {% for error in form_educacion.fecha_inicio.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label for="{{ form_educacion.fecha_fin.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Año de fin
+          </label>
+          <input type="date" name="{{ form_educacion.fecha_fin.html_name }}" id="{{ form_educacion.fecha_fin.id_for_label }}"
+                 value="{{ form_educacion.fecha_fin.value|default:'' }}"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 transition-colors">
+          {% for error in form_educacion.fecha_fin.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <label for="{{ form_educacion.estado.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Estado de los estudios
+        </label>
+        <select name="{{ form_educacion.estado.html_name }}" id="{{ form_educacion.estado.id_for_label }}"
+                class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white transition-colors">
+          <option value="">-- Selecciona --</option>
+          {% for val, label in form_educacion.estado.field.choices %}
+          <option value="{{ val }}" {% if form_educacion.estado.value == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% for error in form_educacion.estado.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <button type="submit"
+            class="mt-4 w-full py-3 px-4 text-center text-white text-sm font-semibold rounded-xl transition-all active:scale-95 border-2"
+            style="border-color: var(--meraki-purple); background-color: var(--meraki-purple-light); color: var(--meraki-purple);">
+      <svg class="inline-block h-4 w-4 mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+      Agregar educación
+    </button>
+  </form>
+</div>
+
+<!-- ==============================
+     SECCIÓN B: IDIOMAS
+     ============================== -->
+<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+  <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+      Idiomas
+    </h3>
+    {% if idioma_list %}
+    <span class="text-xs text-purple-700 font-semibold bg-purple-50 px-2 py-0.5 rounded-full">
+      {{ idioma_list|length }} idioma{{ idioma_list|length|pluralize:"s" }}
+    </span>
+    {% endif %}
+  </div>
+
+  <!-- Lista de idiomas guardados -->
+  {% if idioma_list %}
+  <div class="space-y-2 mb-4">
+    {% for idioma in idioma_list %}
+    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
+      <div class="flex justify-between items-center mb-1.5">
+        <p class="text-sm font-medium text-gray-900">{{ idioma.idioma }}</p>
+        <span class="text-xs font-semibold px-2 py-0.5 rounded-full"
+              style="background-color: var(--meraki-purple-light); color: var(--meraki-purple);">
+          {{ idioma.get_nivel_display|default:idioma.nivel }}
+        </span>
+      </div>
+      <div class="grid grid-cols-3 gap-2 text-xs text-gray-500">
+        <div>
+          <span class="block">Habla</span>
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+            <div class="h-1.5 rounded-full" style="width: {{ idioma.porcentaje_habla }}%; background-color: var(--meraki-purple);"></div>
+          </div>
+          <span class="text-gray-700 font-medium">{{ idioma.porcentaje_habla }}%</span>
+        </div>
+        <div>
+          <span class="block">Lee</span>
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+            <div class="h-1.5 rounded-full" style="width: {{ idioma.porcentaje_lee }}%; background-color: var(--meraki-purple);"></div>
+          </div>
+          <span class="text-gray-700 font-medium">{{ idioma.porcentaje_lee }}%</span>
+        </div>
+        <div>
+          <span class="block">Escribe</span>
+          <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1">
+            <div class="h-1.5 rounded-full" style="width: {{ idioma.porcentaje_escribe }}%; background-color: var(--meraki-purple);"></div>
+          </div>
+          <span class="text-gray-700 font-medium">{{ idioma.porcentaje_escribe }}%</span>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-sm text-gray-400 text-center py-3 mb-4">No has agregado idiomas todavía</p>
+  {% endif %}
+
+  <!-- Formulario de idioma -->
+  <form method="post" action="{% url 'candidato:paso' token.token 3 %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="guardar_idioma">
+
+    <div class="space-y-3">
+      <div>
+        <label for="{{ form_idioma.idioma.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Idioma
+        </label>
+        <input type="text" name="{{ form_idioma.idioma.html_name }}" id="{{ form_idioma.idioma.id_for_label }}"
+               value="{{ form_idioma.idioma.value|default:'' }}"
+               placeholder="Ej: Inglés, Francés, Alemán..."
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors
+                      {% if form_idioma.idioma.errors %}border-red-400 bg-red-50{% endif %}">
+        {% for error in form_idioma.idioma.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form_idioma.nivel.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Nivel general
+        </label>
+        <select name="{{ form_idioma.nivel.html_name }}" id="{{ form_idioma.nivel.id_for_label }}"
+                class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white transition-colors">
+          <option value="">-- Selecciona nivel --</option>
+          {% for val, label in form_idioma.nivel.field.choices %}
+          <option value="{{ val }}" {% if form_idioma.nivel.value == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% for error in form_idioma.nivel.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label for="{{ form_idioma.porcentaje_habla.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1.5">
+            Habla (%)
+          </label>
+          <input type="number" name="{{ form_idioma.porcentaje_habla.html_name }}" id="{{ form_idioma.porcentaje_habla.id_for_label }}"
+                 value="{{ form_idioma.porcentaje_habla.value|default:'0' }}"
+                 min="0" max="100"
+                 class="block w-full px-3 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        </div>
+        <div>
+          <label for="{{ form_idioma.porcentaje_lee.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1.5">
+            Lee (%)
+          </label>
+          <input type="number" name="{{ form_idioma.porcentaje_lee.html_name }}" id="{{ form_idioma.porcentaje_lee.id_for_label }}"
+                 value="{{ form_idioma.porcentaje_lee.value|default:'0' }}"
+                 min="0" max="100"
+                 class="block w-full px-3 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        </div>
+        <div>
+          <label for="{{ form_idioma.porcentaje_escribe.id_for_label }}" class="block text-xs font-medium text-gray-700 mb-1.5">
+            Escribe (%)
+          </label>
+          <input type="number" name="{{ form_idioma.porcentaje_escribe.html_name }}" id="{{ form_idioma.porcentaje_escribe.id_for_label }}"
+                 value="{{ form_idioma.porcentaje_escribe.value|default:'0' }}"
+                 min="0" max="100"
+                 class="block w-full px-3 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        </div>
+      </div>
+    </div>
+
+    <button type="submit"
+            class="mt-4 w-full py-3 px-4 text-center text-sm font-semibold rounded-xl transition-all active:scale-95 border-2"
+            style="border-color: var(--meraki-purple); background-color: var(--meraki-purple-light); color: var(--meraki-purple);">
+      <svg class="inline-block h-4 w-4 mr-1 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+      </svg>
+      Agregar idioma
+    </button>
+  </form>
+</div>
+
+<!-- ==============================
+     SECCIÓN C: SALUD (requerida para continuar)
+     ============================== -->
+<div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6">
+  <div class="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">
+      Datos de salud
+    </h3>
+    <span class="text-xs bg-red-100 text-red-700 font-semibold px-2 py-0.5 rounded-full">Requerido</span>
+  </div>
+
+  {% if salud %}
+  <div class="bg-green-50 border border-green-200 rounded-xl p-3 mb-4 flex items-center gap-2">
+    <svg class="h-5 w-5 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    <p class="text-sm text-green-800 font-medium">Datos de salud guardados. Puedes actualizarlos si es necesario.</p>
+  </div>
+  {% endif %}
+
+  <form method="post" action="{% url 'candidato:paso' token.token 3 %}" novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="accion" value="guardar_salud">
+
+    {% if form_salud.non_field_errors %}
+    <div class="bg-red-50 border border-red-200 rounded-xl p-3 mb-3">
+      {% for error in form_salud.non_field_errors %}<p class="text-sm text-red-700">{{ error }}</p>{% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="space-y-4">
+
+      <div>
+        <label for="{{ form_salud.nivel_salud.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+          Estado de salud general *
+        </label>
+        <div class="grid grid-cols-2 gap-2">
+          {% for val, label in form_salud.nivel_salud.field.choices %}
+          <label class="flex items-center gap-2.5 p-3 rounded-xl border cursor-pointer transition-colors
+                        {% if form_salud.nivel_salud.value == val %}border-purple-400 bg-purple-50{% else %}border-gray-200 hover:border-purple-200 hover:bg-purple-50{% endif %}">
+            <input type="radio" name="{{ form_salud.nivel_salud.html_name }}"
+                   value="{{ val }}"
+                   {% if form_salud.nivel_salud.value == val %}checked{% endif %}
+                   class="h-4 w-4 flex-shrink-0"
+                   style="accent-color: var(--meraki-purple);">
+            <span class="text-sm text-gray-700 font-medium">{{ label }}</span>
+          </label>
+          {% endfor %}
+        </div>
+        {% for error in form_salud.nivel_salud.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form_salud.enfermedades_cronicas.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Enfermedades crónicas, alergias o discapacidades
+        </label>
+        <textarea name="{{ form_salud.enfermedades_cronicas.html_name }}" id="{{ form_salud.enfermedades_cronicas.id_for_label }}"
+                  rows="2" placeholder="Escribe 'Ninguna' si no tienes ninguna..."
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form_salud.enfermedades_cronicas.value|default:'' }}</textarea>
+        {% for error in form_salud.enfermedades_cronicas.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form_salud.antecedentes_familiares.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Antecedentes de salud familiares relevantes
+        </label>
+        <textarea name="{{ form_salud.antecedentes_familiares.html_name }}" id="{{ form_salud.antecedentes_familiares.id_for_label }}"
+                  rows="2" placeholder="Diabetes, hipertensión, enfermedades hereditarias... o 'Ninguno'"
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form_salud.antecedentes_familiares.value|default:'' }}</textarea>
+        {% for error in form_salud.antecedentes_familiares.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form_salud.consumo_sustancias.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Consumo de sustancias
+        </label>
+        <textarea name="{{ form_salud.consumo_sustancias.html_name }}" id="{{ form_salud.consumo_sustancias.id_for_label }}"
+                  rows="2" placeholder="Tabaco, alcohol social, medicamentos controlados... o 'Ninguno'"
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form_salud.consumo_sustancias.value|default:'' }}</textarea>
+        {% for error in form_salud.consumo_sustancias.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+
+    <!-- Botones de navegación incluidos en el formulario de salud (el que envía) -->
+    <div class="flex gap-3 mt-6">
+      <a href="{% url 'candidato:paso' token.token 2 %}"
+         class="flex-1 py-4 px-4 text-center text-gray-700 text-base font-semibold rounded-2xl border border-gray-300 bg-white transition-all active:scale-95 hover:bg-gray-50">
+        Anterior
+      </a>
+      <button type="submit"
+              class="flex-1 py-4 px-4 text-center text-white text-base font-bold rounded-2xl shadow-md transition-all active:scale-95"
+              style="background-color: var(--meraki-purple);"
+              onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+              onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+        Guardar y continuar
+      </button>
+    </div>
+    <p class="text-center text-xs text-gray-400 mt-3">Paso 3 de {{ total_pasos }}</p>
+
+  </form>
+</div>
+{% endblock %}
