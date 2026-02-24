@@ -274,6 +274,7 @@ Los siguientes modelos tienen un workflow de verificación con 3 campos:
 |-------|------|-------|
 | `persona` | FK → Persona, CASCADE | related_name: `estudios` |
 | `tipo_estudio` | FK → TipoEstudio, PROTECT | No se puede borrar si hay estudios |
+| `empresa_cliente` | FK → EmpresaCliente, SET_NULL, null | Empresa que solicita el estudio |
 | `estado` | choices(3): BOR/VIS/PRO/COM/REV/APR/REC/CAN | default: `BOR` |
 | `fecha_programada_visita` | DateTimeField, null | Se llena en estado VIS |
 | `fecha_realizacion` | DateTimeField, null | Se llena al completar |
@@ -285,12 +286,50 @@ Los siguientes modelos tienen un workflow de verificación con 3 campos:
 | `medio_enterado_vacante` | choices: FAC/REF/OTR, blank | Cómo se enteró de la vacante |
 | `tiempo_traslado` | CharField(100), blank | Tiempo estimado de traslado domicilio-empresa |
 | `comentarios_adicionales` | TextField, blank | Campo libre del solicitante |
+| `aspectos_positivos` | TextField, blank | Para el reporte PDF — conclusión del evaluador |
+| `aspectos_negativos` | TextField, blank | Para el reporte PDF — conclusión del evaluador |
 
 **Acciones de admin disponibles:** `marcar_en_proceso` (BOR→PRO), `marcar_completado` (PRO→COM)
 
 **NOTA IMPORTANTE:** El campo `estado` se transiciona manualmente. No hay lógica de transición automática ni validación de estados permitidos en el modelo — esto debe implementarse en las vistas o en un método `transicionar(nuevo_estado)`.
 
-**URLs:** `estudios:estudio_list/create/detail/update/delete`
+**URLs:** `estudios:estudio_list/create/detail/update/delete`, `estudios:cambiar_estado`, `estudios:generar_token`, `estudios:regenerar_token`
+
+---
+
+**Modelo `EstudioToken`** (token de acceso público para candidatos — Fase 3)
+
+| Campo | Tipo | Notas |
+|-------|------|-------|
+| `estudio` | OneToOne → EstudioSocioeconomico, CASCADE | related_name: `token` |
+| `token` | UUIDField, unique, editable=False | Auto-generado con `uuid.uuid4` |
+| `activo` | BooleanField, default=True | `False` cuando el candidato completa el formulario |
+| `fecha_expiracion` | DateTimeField, null | Se genera con 30 días de vigencia |
+| `created_at` | DateTimeField, auto_now_add | |
+
+**Property:** `vigente` → `activo and (not fecha_expiracion or now() <= fecha_expiracion)`
+
+**Portal del candidato (Fase 3 — Escenario A):**
+```
+GET  /candidato/<uuid>/              → BienvenidaView — valida token y muestra intro
+GET  /candidato/<uuid>/paso/<1-7>/   → PasoDispatcherView → Paso1View...Paso7View
+POST /candidato/<uuid>/paso/<1-7>/   → guarda datos del paso y redirige al siguiente
+GET  /candidato/<uuid>/gracias/      → GraciasView — confirmación de envío
+GET  /candidato/<uuid>/invalido/     → TokenInvalidoView — token inválido/expirado/completado
+POST /estudios/<pk>/generar-token/   → GenerarTokenView (login requerido)
+POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
+```
+
+**Formularios del portal candidato** (`apps/estudios/forms_candidato.py`):
+- `Paso1PersonaForm` → campos de `Persona`
+- `Paso2DomicilioForm` → campos de `Domicilio`
+- `Paso3EducacionForm`, `Paso3IdiomaForm`, `Paso3SaludForm` → educacion + salud
+- `Paso4FamiliarForm` → `GrupoFamiliar`
+- `Paso5EconomiaForm` → `SituacionEconomica`
+- `Paso6ReferenciaForm` → `Referencia` (mínimo 3 requeridas)
+- `Paso7LaboralForm`, `Paso7DocumentoForm` → `HistorialLaboral` + `Documento`
+
+**Templates del portal** (`templates/candidato/`): `base_candidato.html`, `bienvenida.html`, `token_invalido.html`, `paso_1.html` al `paso_7.html`, `gracias.html`.
 
 ---
 
@@ -1054,4 +1093,4 @@ https://docs.google.com/forms/d/e/1FAIpQLSc75Ncb7ON5zEtl2m8kBHuH971DDD7VGQREtdRf
 ---
 
 *Documento actualizado por Claude Code el 2026-02-21.*
-*Versión 1.1 — refleja todos los modelos implementados incluyendo los nuevos campos derivados del análisis del formulario Meraki.*
+*Versión 1.2 — actualizado el 2026-02-22 tras completar Fase 3 (portal de autogestión del candidato).*

@@ -8,6 +8,7 @@ from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView,
 )
 
+from .forms import EstudioSocioeconomicoForm
 from .models import EstudioSocioeconomico
 
 
@@ -25,6 +26,7 @@ TRANSICIONES_VALIDAS = {
 
 class EstudioListView(LoginRequiredMixin, ListView):
     model = EstudioSocioeconomico
+    template_name = 'estudios/estudio_list.html'
     context_object_name = 'estudios'
     paginate_by = 25
 
@@ -51,6 +53,7 @@ class EstudioListView(LoginRequiredMixin, ListView):
 
 class EstudioDetailView(LoginRequiredMixin, DetailView):
     model = EstudioSocioeconomico
+    template_name = 'estudios/estudio_detail.html'
     context_object_name = 'estudio'
 
     def get_context_data(self, **kwargs):
@@ -58,18 +61,18 @@ class EstudioDetailView(LoginRequiredMixin, DetailView):
         estudio = self.get_object()
         ctx['transiciones_validas'] = TRANSICIONES_VALIDAS.get(estudio.estado, [])
         ctx['estados_display'] = dict(EstudioSocioeconomico.ESTADO_ESTUDIO)
+        # Token del candidato (Fase 3 — Portal de autogestión)
+        try:
+            ctx['token_candidato'] = estudio.token
+        except Exception:
+            ctx['token_candidato'] = None
         return ctx
 
 
 class EstudioCreateView(LoginRequiredMixin, CreateView):
     model = EstudioSocioeconomico
-    fields = [
-        'persona', 'empresa_cliente', 'tipo_estudio', 'estado',
-        'fecha_programada_visita', 'fecha_realizacion', 'fecha_aprobacion',
-        'observaciones', 'conclusion', 'aspectos_positivos', 'aspectos_negativos',
-        'expectativas_salariales', 'medio_enterado_vacante',
-        'tiempo_traslado', 'comentarios_adicionales',
-    ]
+    template_name = 'estudios/estudio_form.html'
+    form_class = EstudioSocioeconomicoForm
     success_url = reverse_lazy('estudios:estudio_list')
 
     def form_valid(self, form):
@@ -80,13 +83,8 @@ class EstudioCreateView(LoginRequiredMixin, CreateView):
 
 class EstudioUpdateView(LoginRequiredMixin, UpdateView):
     model = EstudioSocioeconomico
-    fields = [
-        'persona', 'empresa_cliente', 'tipo_estudio', 'estado',
-        'fecha_programada_visita', 'fecha_realizacion', 'fecha_aprobacion',
-        'observaciones', 'conclusion', 'aspectos_positivos', 'aspectos_negativos',
-        'expectativas_salariales', 'medio_enterado_vacante',
-        'tiempo_traslado', 'comentarios_adicionales',
-    ]
+    template_name = 'estudios/estudio_form.html'
+    form_class = EstudioSocioeconomicoForm
     success_url = reverse_lazy('estudios:estudio_list')
 
     def form_valid(self, form):
@@ -96,6 +94,7 @@ class EstudioUpdateView(LoginRequiredMixin, UpdateView):
 
 class EstudioDeleteView(LoginRequiredMixin, DeleteView):
     model = EstudioSocioeconomico
+    template_name = 'estudios/estudio_confirm_delete.html'
     context_object_name = 'estudio'
     success_url = reverse_lazy('estudios:estudio_list')
 

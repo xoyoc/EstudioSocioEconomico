@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import views
+from . import views_candidato
 
 app_name = 'estudios'
 
@@ -11,4 +12,7 @@ urlpatterns = [
     path('<int:pk>/editar/', views.EstudioUpdateView.as_view(), name='estudio_update'),
     path('<int:pk>/eliminar/', views.EstudioDeleteView.as_view(), name='estudio_delete'),
     path('<int:pk>/cambiar-estado/', views.CambiarEstadoView.as_view(), name='cambiar_estado'),
+    # Token del candidato (Escenario A)
+    path('<int:pk>/generar-token/', views_candidato.GenerarTokenView.as_view(), name='generar_token'),
+    path('<int:pk>/regenerar-token/', views_candidato.RegenerarTokenView.as_view(), name='regenerar_token'),
 ]

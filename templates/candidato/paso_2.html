@@ -1,0 +1,404 @@
+{% extends "candidato/base_candidato.html" %}
+
+{% block title %}Paso 2: Domicilio — Portal del Candidato{% endblock %}
+
+{% block content %}
+<h2 class="text-lg font-bold text-gray-900 mb-1">Domicilio y vivienda</h2>
+<p class="text-sm text-gray-500 mb-5">Información sobre tu domicilio actual.</p>
+
+<form method="post" action="{% url 'candidato:paso' token.token 2 %}" novalidate>
+  {% csrf_token %}
+
+  {% if form.non_field_errors %}
+  <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+    {% for error in form.non_field_errors %}
+    <p class="text-sm text-red-700">{{ error }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- SECCIÓN: Dirección -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Dirección
+    </h3>
+    <div class="space-y-4">
+
+      <div>
+        <label for="{{ form.calle.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Calle *
+        </label>
+        <input type="text" name="{{ form.calle.html_name }}" id="{{ form.calle.id_for_label }}"
+               value="{{ form.calle.value|default:'' }}"
+               placeholder="Nombre de la calle"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.calle.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.calle.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.numero_exterior.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            No. exterior *
+          </label>
+          <input type="text" name="{{ form.numero_exterior.html_name }}" id="{{ form.numero_exterior.id_for_label }}"
+                 value="{{ form.numero_exterior.value|default:'' }}"
+                 placeholder="Ej: 123"
+                 class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                        {% if form.numero_exterior.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+          {% for error in form.numero_exterior.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label for="{{ form.numero_interior.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            No. interior
+          </label>
+          <input type="text" name="{{ form.numero_interior.html_name }}" id="{{ form.numero_interior.id_for_label }}"
+                 value="{{ form.numero_interior.value|default:'' }}"
+                 placeholder="Depto, piso..."
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+          {% for error in form.numero_interior.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <label for="{{ form.entre_calles.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Entre calles
+        </label>
+        <input type="text" name="{{ form.entre_calles.html_name }}" id="{{ form.entre_calles.id_for_label }}"
+               value="{{ form.entre_calles.value|default:'' }}"
+               placeholder="Ej: entre Av. Juárez y Calle 5"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.entre_calles.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.colonia.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Colonia / Fraccionamiento *
+        </label>
+        <input type="text" name="{{ form.colonia.html_name }}" id="{{ form.colonia.id_for_label }}"
+               value="{{ form.colonia.value|default:'' }}"
+               placeholder="Nombre de la colonia"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.colonia.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.colonia.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.codigo_postal.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Código postal *
+        </label>
+        <input type="text" name="{{ form.codigo_postal.html_name }}" id="{{ form.codigo_postal.id_for_label }}"
+               value="{{ form.codigo_postal.value|default:'' }}"
+               placeholder="5 dígitos"
+               maxlength="5"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.codigo_postal.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.codigo_postal.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label for="{{ form.municipio.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Municipio / Alcaldía *
+        </label>
+        <input type="text" name="{{ form.municipio.html_name }}" id="{{ form.municipio.id_for_label }}"
+               value="{{ form.municipio.value|default:'' }}"
+               placeholder="Ej: San Pedro Garza García"
+               class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                      {% if form.municipio.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+        {% for error in form.municipio.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.estado.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Estado *
+          </label>
+          <input type="text" name="{{ form.estado.html_name }}" id="{{ form.estado.id_for_label }}"
+                 value="{{ form.estado.value|default:'' }}"
+                 placeholder="Ej: Nuevo León"
+                 class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                        {% if form.estado.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+          {% for error in form.estado.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label for="{{ form.pais.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            País
+          </label>
+          <input type="text" name="{{ form.pais.html_name }}" id="{{ form.pais.id_for_label }}"
+                 value="{{ form.pais.value|default:'México' }}"
+                 placeholder="México"
+                 class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+          {% for error in form.pais.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Tipo de vivienda -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Tipo de vivienda
+    </h3>
+    <div class="space-y-4">
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="{{ form.tipo_vivienda.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Tipo de vivienda
+          </label>
+          <select name="{{ form.tipo_vivienda.html_name }}" id="{{ form.tipo_vivienda.id_for_label }}"
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white transition-colors">
+            <option value="">-- Selecciona --</option>
+            {% for val, label in form.tipo_vivienda.field.choices %}
+            <option value="{{ val }}" {% if form.tipo_vivienda.value == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% for error in form.tipo_vivienda.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+        <div>
+          <label for="{{ form.tipo_inmueble.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Tenencia
+          </label>
+          <select name="{{ form.tipo_inmueble.html_name }}" id="{{ form.tipo_inmueble.id_for_label }}"
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white transition-colors">
+            <option value="">-- Selecciona --</option>
+            {% for val, label in form.tipo_inmueble.field.choices %}
+            <option value="{{ val }}" {% if form.tipo_inmueble.value == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% for error in form.tipo_inmueble.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+        </div>
+      </div>
+
+      <div>
+        <label for="{{ form.propietario_nombre.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Nombre del propietario (si rentado)
+        </label>
+        <input type="text" name="{{ form.propietario_nombre.html_name }}" id="{{ form.propietario_nombre.id_for_label }}"
+               value="{{ form.propietario_nombre.value|default:'' }}"
+               placeholder="Solo si no eres el propietario"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.propietario_nombre.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Tiempo de residencia</label>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <input type="number" name="{{ form.tiempo_residencia_anios.html_name }}" id="{{ form.tiempo_residencia_anios.id_for_label }}"
+                   value="{{ form.tiempo_residencia_anios.value|default:'' }}"
+                   placeholder="Años" min="0" max="100"
+                   class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+            <p class="text-xs text-gray-400 mt-1">Años</p>
+          </div>
+          <div>
+            <input type="number" name="{{ form.tiempo_residencia_meses.html_name }}" id="{{ form.tiempo_residencia_meses.id_for_label }}"
+                   value="{{ form.tiempo_residencia_meses.value|default:'' }}"
+                   placeholder="Meses" min="0" max="11"
+                   class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+            <p class="text-xs text-gray-400 mt-1">Meses</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Características físicas -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Características del inmueble
+    </h3>
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <label for="{{ form.numero_habitaciones.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Habitaciones
+        </label>
+        <input type="number" name="{{ form.numero_habitaciones.html_name }}" id="{{ form.numero_habitaciones.id_for_label }}"
+               value="{{ form.numero_habitaciones.value|default:'' }}"
+               min="0" max="50"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.numero_habitaciones.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label for="{{ form.numero_niveles.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Niveles
+        </label>
+        <input type="number" name="{{ form.numero_niveles.html_name }}" id="{{ form.numero_niveles.id_for_label }}"
+               value="{{ form.numero_niveles.value|default:'' }}"
+               min="1" max="10"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.numero_niveles.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="col-span-2">
+        <label for="{{ form.superficie_m2.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Superficie (m2)
+        </label>
+        <input type="number" name="{{ form.superficie_m2.html_name }}" id="{{ form.superficie_m2.id_for_label }}"
+               value="{{ form.superficie_m2.value|default:'' }}"
+               placeholder="Metros cuadrados aproximados"
+               min="0" step="0.01"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.superficie_m2.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div class="col-span-2">
+        <label for="{{ form.material_construccion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Material de construcción principal
+        </label>
+        <input type="text" name="{{ form.material_construccion.html_name }}" id="{{ form.material_construccion.id_for_label }}"
+               value="{{ form.material_construccion.value|default:'' }}"
+               placeholder="Ej: Block, tabique, madera..."
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.material_construccion.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Servicios -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Servicios disponibles
+    </h3>
+    <div class="grid grid-cols-2 gap-3">
+      {% for field in form %}
+      {% if field.html_name == 'agua' or field.html_name == 'luz' or field.html_name == 'drenaje' or field.html_name == 'gas' or field.html_name == 'internet' or field.html_name == 'tv_cable' or field.html_name == 'pavimentacion' or field.html_name == 'telefono_domicilio' %}
+      <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition-colors">
+        <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+               {% if field.value %}checked{% endif %}
+               class="h-5 w-5 rounded flex-shrink-0"
+               style="accent-color: var(--meraki-purple);">
+        <span class="text-sm text-gray-700">{{ field.label }}</span>
+      </label>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Espacios -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Espacios de la vivienda
+    </h3>
+    <div class="grid grid-cols-2 gap-3">
+      {% for field in form %}
+      {% if field.html_name == 'sala' or field.html_name == 'cocina' or field.html_name == 'comedor' or field.html_name == 'patio_servicio' or field.html_name == 'cochera' %}
+      <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition-colors">
+        <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+               {% if field.value %}checked{% endif %}
+               class="h-5 w-5 rounded flex-shrink-0"
+               style="accent-color: var(--meraki-purple);">
+        <span class="text-sm text-gray-700">{{ field.label }}</span>
+      </label>
+      {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Materiales y condición -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Materiales y condición
+    </h3>
+    <p class="text-xs text-gray-500 mb-3">Selecciona los que apliquen a tu vivienda</p>
+    <div class="grid grid-cols-2 gap-3 mb-4">
+      {% for field in form %}
+      {% if field.html_name == 'piso' or field.html_name == 'piso_cemento' or field.html_name == 'enjarre' or field.html_name == 'paredes_sin_enjarre' or field.html_name == 'techo_lamina' or field.html_name == 'loza' or field.html_name == 'puertas' %}
+      <label class="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:bg-purple-50 hover:border-purple-300 transition-colors">
+        <input type="checkbox" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+               {% if field.value %}checked{% endif %}
+               class="h-5 w-5 rounded flex-shrink-0"
+               style="accent-color: var(--meraki-purple);">
+        <span class="text-sm text-gray-700">{{ field.label }}</span>
+      </label>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    <!-- Orden y limpieza -->
+    <div class="space-y-4">
+      {% if form.orden_limpieza %}
+      <div>
+        <label for="{{ form.orden_limpieza.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Orden y limpieza general
+        </label>
+        <select name="{{ form.orden_limpieza.html_name }}" id="{{ form.orden_limpieza.id_for_label }}"
+                class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white transition-colors">
+          <option value="">-- Selecciona --</option>
+          {% for val, label in form.orden_limpieza.field.choices %}
+          <option value="{{ val }}" {% if form.orden_limpieza.value == val %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+        {% for error in form.orden_limpieza.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      {% endif %}
+
+      <div>
+        <label for="{{ form.observaciones_inmueble.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Observaciones del inmueble
+        </label>
+        <textarea name="{{ form.observaciones_inmueble.html_name }}" id="{{ form.observaciones_inmueble.id_for_label }}"
+                  rows="3" placeholder="Describe el estado general de tu vivienda..."
+                  class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 resize-none transition-colors">{{ form.observaciones_inmueble.value|default:'' }}</textarea>
+        {% for error in form.observaciones_inmueble.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- SECCIÓN: Patrimonio del inmueble -->
+  <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+      Valor estimado del patrimonio
+    </h3>
+    <div class="space-y-4">
+      <div>
+        <label for="{{ form.valor_inmueble.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Valor aproximado del inmueble ($)
+        </label>
+        <input type="number" name="{{ form.valor_inmueble.html_name }}" id="{{ form.valor_inmueble.id_for_label }}"
+               value="{{ form.valor_inmueble.value|default:'' }}"
+               placeholder="0.00" min="0" step="0.01"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.valor_inmueble.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label for="{{ form.valor_muebles.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Valor de muebles ($)
+        </label>
+        <input type="number" name="{{ form.valor_muebles.html_name }}" id="{{ form.valor_muebles.id_for_label }}"
+               value="{{ form.valor_muebles.value|default:'' }}"
+               placeholder="0.00" min="0" step="0.01"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.valor_muebles.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+      <div>
+        <label for="{{ form.valor_electrodomesticos.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+          Valor de electrodomésticos ($)
+        </label>
+        <input type="number" name="{{ form.valor_electrodomesticos.html_name }}" id="{{ form.valor_electrodomesticos.id_for_label }}"
+               value="{{ form.valor_electrodomesticos.value|default:'' }}"
+               placeholder="0.00" min="0" step="0.01"
+               class="block w-full px-4 py-3 text-base border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 transition-colors">
+        {% for error in form.valor_electrodomesticos.errors %}<p class="mt-1 text-xs text-red-600">{{ error }}</p>{% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Botones de navegación -->
+  <div class="flex gap-3 mb-4">
+    <a href="{% url 'candidato:paso' token.token 1 %}"
+       class="flex-1 py-4 px-4 text-center text-gray-700 text-base font-semibold rounded-2xl border border-gray-300 bg-white transition-all active:scale-95 hover:bg-gray-50">
+      Anterior
+    </a>
+    <button type="submit"
+            class="flex-1 py-4 px-4 text-center text-white text-base font-bold rounded-2xl shadow-md transition-all active:scale-95"
+            style="background-color: var(--meraki-purple);"
+            onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+            onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+      Guardar y continuar
+    </button>
+  </div>
+  <p class="text-center text-xs text-gray-400">Paso 2 de {{ total_pasos }}</p>
+
+</form>
+{% endblock %}

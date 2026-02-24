@@ -5,6 +5,7 @@ from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView,
 )
 
+from .forms import PersonaForm, SaludPersonaForm
 from .models import Persona, SaludPersona
 
 
@@ -37,17 +38,7 @@ class PersonaDetailView(LoginRequiredMixin, DetailView):
 
 class PersonaCreateView(LoginRequiredMixin, CreateView):
     model = Persona
-    fields = [
-        'nombre', 'apellido_paterno', 'apellido_materno',
-        'fecha_nacimiento', 'lugar_nacimiento',
-        'tipo_identificacion', 'numero_identificacion',
-        'curp', 'rfc', 'nss',
-        'licencia_manejo_folio', 'cartilla_militar_folio', 'acta_nacimiento_numero',
-        'email', 'telefono_movil', 'telefono_fijo', 'facebook_perfil',
-        'estado_civil', 'numero_dependientes',
-        'peso', 'estatura',
-        'activo',
-    ]
+    form_class = PersonaForm
     success_url = reverse_lazy('personas:persona_list')
 
     def form_valid(self, form):
@@ -58,17 +49,7 @@ class PersonaCreateView(LoginRequiredMixin, CreateView):
 
 class PersonaUpdateView(LoginRequiredMixin, UpdateView):
     model = Persona
-    fields = [
-        'nombre', 'apellido_paterno', 'apellido_materno',
-        'fecha_nacimiento', 'lugar_nacimiento',
-        'tipo_identificacion', 'numero_identificacion',
-        'curp', 'rfc', 'nss',
-        'licencia_manejo_folio', 'cartilla_militar_folio', 'acta_nacimiento_numero',
-        'email', 'telefono_movil', 'telefono_fijo', 'facebook_perfil',
-        'estado_civil', 'numero_dependientes',
-        'peso', 'estatura',
-        'activo',
-    ]
+    form_class = PersonaForm
     success_url = reverse_lazy('personas:persona_list')
 
     def form_valid(self, form):
@@ -84,11 +65,7 @@ class PersonaDeleteView(LoginRequiredMixin, DeleteView):
 
 class SaludPersonaCreateView(LoginRequiredMixin, CreateView):
     model = SaludPersona
-    fields = [
-        'persona', 'nivel_salud',
-        'enfermedades_cronicas', 'antecedentes_familiares',
-        'consumo_sustancias',
-    ]
+    form_class = SaludPersonaForm
     success_url = reverse_lazy('personas:persona_list')
 
     def form_valid(self, form):
@@ -99,11 +76,7 @@ class SaludPersonaCreateView(LoginRequiredMixin, CreateView):
 
 class SaludPersonaUpdateView(LoginRequiredMixin, UpdateView):
     model = SaludPersona
-    fields = [
-        'nivel_salud',
-        'enfermedades_cronicas', 'antecedentes_familiares',
-        'consumo_sustancias',
-    ]
+    form_class = SaludPersonaForm
     context_object_name = 'salud'
     success_url = reverse_lazy('personas:persona_list')
 

@@ -211,7 +211,7 @@ Permitir al analista capturar y gestionar el expediente completo desde el sistem
 
 ## FASE 3 — Portal público de autogestión (Escenario A)
 
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 **Prioridad:** 🟠 Alto
 **Dependencias:** FASE 0, FASE 1
 
@@ -223,6 +223,7 @@ Link único con token que el candidato abre desde su celular para llenar su prop
 /candidato/<uuid:token>/          → página de bienvenida
 /candidato/<uuid:token>/paso/<n>/ → cada paso del wizard
 /candidato/<uuid:token>/gracias/  → confirmación de envío
+/candidato/<uuid:token>/invalido/ → token inválido/expirado/completado
 ```
 
 ### Wizard multi-paso (7 pasos, mobile-first)
@@ -238,20 +239,35 @@ Link único con token que el candidato abre desde su celular para llenar su prop
 | 7 | Historial laboral + subida de foto y documentos | `HistorialLaboral`, `Documento` |
 
 ### Funcionalidades del portal
-- [ ] Acceso sin login — validación solo por token UUID
-- [ ] Validación de token: expirado, ya completado, inválido
-- [ ] Barra de progreso visual entre pasos
-- [ ] Guardado automático al avanzar cada paso (el candidato puede retomar)
-- [ ] Upload de foto desde cámara del celular (retrato, fachada, interior)
-- [ ] Formularios adaptativos mobile-first (inputs grandes, teclado numérico donde aplique)
-- [ ] Página de confirmación al completar: mensaje de éxito + marcar `EstudioToken.activo=False`
-- [ ] Notificación automática al analista cuando el candidato completa el formulario
+- [x] Acceso sin login — validación solo por token UUID
+- [x] Validación de token: expirado, ya completado, inválido
+- [x] Barra de progreso visual entre pasos
+- [x] Guardado automático al avanzar cada paso (el candidato puede retomar)
+- [x] Upload de foto desde cámara del celular (retrato, fachada, interior)
+- [x] Formularios adaptativos mobile-first (inputs grandes, teclado numérico donde aplique)
+- [x] Página de confirmación al completar: mensaje de éxito + marcar `EstudioToken.activo=False`
+- [ ] Notificación automática al analista cuando el candidato completa el formulario (pendiente FASE 6)
 
 ### Vista del analista para gestionar tokens
-- [ ] Botón "Generar link para candidato" en detalle del estudio
-- [ ] Mostrar link generado con botón de copiar
-- [ ] Indicador de estado: Pendiente / Completado / Expirado
-- [ ] Botón para regenerar token (invalida el anterior)
+- [x] Botón "Generar link para candidato" en detalle del estudio
+- [x] Mostrar link generado con botón de copiar
+- [x] Indicador de estado: Pendiente / Completado / Expirado
+- [x] Botón para regenerar token (invalida el anterior)
+
+### Archivos creados en esta fase
+- `apps/estudios/forms_candidato.py` — Formularios de cada paso del wizard
+- `apps/estudios/views_candidato.py` — Vistas del portal + gestión de tokens del analista
+- `apps/estudios/urls_candidato.py` — URLs del portal (actualizado)
+- `apps/estudios/urls.py` — Rutas de generar/regenerar token añadidas
+- `apps/estudios/views.py` — `EstudioDetailView` expone `token_candidato` en contexto
+- `templates/candidato/base_candidato.html` — Layout mobile-first del portal
+- `templates/candidato/bienvenida.html`
+- `templates/candidato/token_invalido.html`
+- `templates/candidato/paso_1.html` al `paso_7.html` (7 templates)
+- `templates/candidato/gracias.html`
+- `templates/estudios/estudio_detail.html` — Sección de token del candidato añadida
+
+*Completada el 2026-02-22.*
 
 ---
 
@@ -425,7 +441,7 @@ Pillow
 | 0 | Completar modelos | 🔴 Crítico | ✅ Completada |
 | 1 | Base de templates y auth | 🔴 Crítico | ✅ Completada |
 | 2 | Expediente del candidato (analista) | 🔴 Crítico | ✅ Completada |
-| 3 | Portal público de autogestión | 🟠 Alto | ⬜ Pendiente |
+| 3 | Portal público de autogestión | 🟠 Alto | ✅ Completada |
 | 4 | App del inspector en campo | 🟠 Alto | ⬜ Pendiente |
 | 5 | Generación del reporte PDF | 🟠 Alto | ⬜ Pendiente |
 | 6 | Notificaciones y flujo automatizado | 🟡 Medio | ⬜ Pendiente |
@@ -433,5 +449,5 @@ Pillow
 
 ---
 
-*Plan elaborado el 2026-02-21. Actualizado el 2026-02-22 tras completar Fase 0, Fase 1 y Fase 2.*
+*Plan elaborado el 2026-02-21. Actualizado el 2026-02-22 tras completar Fase 0, Fase 1, Fase 2 y Fase 3.*
 *Basado en el reporte PDF de referencia (Meraki Consultoría) y el análisis del formulario Google Forms de Meraki.*

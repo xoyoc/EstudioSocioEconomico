@@ -4,6 +4,7 @@ from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView,
 )
 
+from .forms import ReferenciaForm
 from .models import Referencia
 
 
@@ -20,12 +21,7 @@ class ReferenciaDetailView(LoginRequiredMixin, DetailView):
 
 class ReferenciaCreateView(LoginRequiredMixin, CreateView):
     model = Referencia
-    fields = [
-        'persona', 'tipo', 'nombre', 'telefono', 'email',
-        'parentesco_o_relacion', 'tiempo_conocer_anios', 'domicilio',
-        'actividad_tiempo_libre', 'lugares_laborado', 'conducta', 'cualidades',
-        'verificada', 'comentarios_verificacion',
-    ]
+    form_class = ReferenciaForm
     success_url = reverse_lazy('referencias:referencia_list')
 
     def form_valid(self, form):
@@ -36,12 +32,7 @@ class ReferenciaCreateView(LoginRequiredMixin, CreateView):
 
 class ReferenciaUpdateView(LoginRequiredMixin, UpdateView):
     model = Referencia
-    fields = [
-        'persona', 'tipo', 'nombre', 'telefono', 'email',
-        'parentesco_o_relacion', 'tiempo_conocer_anios', 'domicilio',
-        'actividad_tiempo_libre', 'lugares_laborado', 'conducta', 'cualidades',
-        'verificada', 'comentarios_verificacion',
-    ]
+    form_class = ReferenciaForm
     success_url = reverse_lazy('referencias:referencia_list')
 
     def form_valid(self, form):

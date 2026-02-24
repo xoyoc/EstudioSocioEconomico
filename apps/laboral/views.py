@@ -4,6 +4,7 @@ from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView,
 )
 
+from .forms import HistorialLaboralForm
 from .models import HistorialLaboral
 
 
@@ -20,14 +21,21 @@ class HistorialLaboralDetailView(LoginRequiredMixin, DetailView):
 
 class HistorialLaboralCreateView(LoginRequiredMixin, CreateView):
     model = HistorialLaboral
-    fields = [
-        'persona', 'empresa', 'puesto', 'telefono_empresa',
-        'fecha_inicio', 'fecha_fin', 'es_trabajo_actual',
-        'salario_inicial', 'salario_final',
-        'nombre_jefe', 'telefono_jefe', 'motivo_separacion',
-        'verificada', 'fecha_verificacion',
-    ]
+    form_class = HistorialLaboralForm
     success_url = reverse_lazy('laboral:historiallaboral_list')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        persona_pk = self.request.GET.get('persona')
+        if persona_pk:
+            initial['persona'] = persona_pk
+        return initial
+
+    def get_success_url(self):
+        back = self.request.GET.get('back')
+        if back:
+            return reverse_lazy('estudios:estudio_detail', kwargs={'pk': back})
+        return super().get_success_url()
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
@@ -37,13 +45,7 @@ class HistorialLaboralCreateView(LoginRequiredMixin, CreateView):
 
 class HistorialLaboralUpdateView(LoginRequiredMixin, UpdateView):
     model = HistorialLaboral
-    fields = [
-        'persona', 'empresa', 'puesto', 'telefono_empresa',
-        'fecha_inicio', 'fecha_fin', 'es_trabajo_actual',
-        'salario_inicial', 'salario_final',
-        'nombre_jefe', 'telefono_jefe', 'motivo_separacion',
-        'verificada', 'fecha_verificacion',
-    ]
+    form_class = HistorialLaboralForm
     success_url = reverse_lazy('laboral:historiallaboral_list')
 
     def form_valid(self, form):
