@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:pk>/', views.HistorialLaboralDetailView.as_view(), name='historiallaboral_detail'),
     path('<int:pk>/editar/', views.HistorialLaboralUpdateView.as_view(), name='historiallaboral_update'),
     path('<int:pk>/eliminar/', views.HistorialLaboralDeleteView.as_view(), name='historiallaboral_delete'),
+    path('<int:pk>/verificar/', views.VerificarHistorialLaboralView.as_view(), name='historiallaboral_verificar'),
 ]

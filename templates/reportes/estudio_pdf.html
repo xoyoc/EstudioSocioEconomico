@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estudio Socioeconómico — {{ persona.folio }}</title>
+  <style>
+    /* ============================================================
+       RESET Y BASE
+    ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* ============================================================
+       CONFIGURACIÓN DE PÁGINA (WeasyPrint)
+    ============================================================ */
+    @page {
+      size: A4;
+      margin: 1.5cm 1.8cm;
+      @bottom-center {
+        content: "Folio: {{ persona.folio }} — Página " counter(page) " de " counter(pages);
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 7pt;
+        color: #888888;
+        border-top: 1px solid #dddddd;
+        padding-top: 4pt;
+        width: 100%;
+        text-align: center;
+      }
+    }
+
+    /* ============================================================
+       TIPOGRAFÍA Y COLOR BASE
+    ============================================================ */
+    :root {
+      --color-primario: #9B8EC4;
+      --color-primario-oscuro: #7B6FA8;
+      --color-primario-claro: #EDE9F8;
+      --color-texto: #333333;
+      --color-texto-suave: #666666;
+      --color-borde: #dddddd;
+      --color-fondo-alterno: #F8F7FC;
+      --color-riesgo-bajo: #2E7D32;
+      --color-riesgo-medio: #F57F17;
+      --color-riesgo-alto: #C62828;
+      --color-riesgo-critico: #4A148C;
+    }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 9pt;
+      color: var(--color-texto);
+      line-height: 1.45;
+    }
+
+    /* ============================================================
+       SALTOS DE PÁGINA
+    ============================================================ */
+    .pagina-nueva {
+      page-break-before: always;
+      break-before: page;
+    }
+
+    .evitar-corte {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* ============================================================
+       ENCABEZADOS DE SECCIÓN
+    ============================================================ */
+    .seccion-titulo {
+      background-color: var(--color-primario);
+      color: #ffffff;
+      font-size: 10pt;
+      font-weight: bold;
+      padding: 4pt 8pt;
+      margin-bottom: 8pt;
+      margin-top: 12pt;
+      letter-spacing: 0.3pt;
+    }
+
+    .seccion-titulo:first-child {
+      margin-top: 0;
+    }
+
+    .subseccion-titulo {
+      border-left: 3px solid var(--color-primario);
+      padding-left: 6pt;
+      font-size: 9pt;
+      font-weight: bold;
+      color: var(--color-primario-oscuro);
+      margin-top: 10pt;
+      margin-bottom: 6pt;
+    }
+
+    /* ============================================================
+       TABLAS
+    ============================================================ */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8.5pt;
+    }
+
+    th {
+      background-color: var(--color-primario-claro);
+      color: var(--color-primario-oscuro);
+      font-weight: bold;
+      padding: 4pt 6pt;
+      border: 1px solid var(--color-borde);
+      text-align: left;
+      font-size: 8pt;
+    }
+
+    td {
+      padding: 3.5pt 6pt;
+      border: 1px solid var(--color-borde);
+      vertical-align: top;
+    }
+
+    tr:nth-child(even) td {
+      background-color: var(--color-fondo-alterno);
+    }
+
+    .tabla-datos th {
+      width: 38%;
+      background-color: var(--color-fondo-alterno);
+      color: var(--color-texto-suave);
+      font-weight: bold;
+    }
+
+    .tabla-datos td {
+      color: var(--color-texto);
+    }
+
+    /* ============================================================
+       CUADRÍCULA DE DOS COLUMNAS
+    ============================================================ */
+    .grid-2col {
+      display: table;
+      width: 100%;
+      border-spacing: 0;
+    }
+
+    .grid-2col .col-izq,
+    .grid-2col .col-der {
+      display: table-cell;
+      vertical-align: top;
+    }
+
+    .grid-2col .col-izq {
+      width: 60%;
+      padding-right: 10pt;
+    }
+
+    .grid-2col .col-der {
+      width: 40%;
+      padding-left: 4pt;
+    }
+
+    .grid-2col-igual .col-izq,
+    .grid-2col-igual .col-der {
+      width: 50%;
+    }
+
+    /* ============================================================
+       BADGES / ETIQUETAS
+    ============================================================ */
+    .badge {
+      display: inline-block;
+      padding: 2pt 6pt;
+      border-radius: 2pt;
+      font-size: 7.5pt;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.3pt;
+    }
+
+    .badge-verificado {
+      background-color: #E8F5E9;
+      color: #2E7D32;
+      border: 1px solid #A5D6A7;
+    }
+
+    .badge-no-verificado {
+      background-color: #FFF3E0;
+      color: #E65100;
+      border: 1px solid #FFCC02;
+    }
+
+    .badge-estado-aprobado { background-color: #E8F5E9; color: #1B5E20; border: 1px solid #81C784; }
+    .badge-estado-rechazado { background-color: #FFEBEE; color: #B71C1C; border: 1px solid #EF9A9A; }
+    .badge-estado-revision { background-color: #F3E5F5; color: #4A148C; border: 1px solid #CE93D8; }
+    .badge-estado-completado { background-color: #E3F2FD; color: #0D47A1; border: 1px solid #90CAF9; }
+    .badge-estado-proceso { background-color: #FFF8E1; color: #E65100; border: 1px solid #FFE082; }
+    .badge-estado-borrador { background-color: #F5F5F5; color: #616161; border: 1px solid #BDBDBD; }
+
+    .badge-riesgo-bajo { background-color: #E8F5E9; color: #1B5E20; border: 1px solid #81C784; }
+    .badge-riesgo-medio { background-color: #FFF8E1; color: #E65100; border: 1px solid #FFE082; }
+    .badge-riesgo-alto { background-color: #FFEBEE; color: #B71C1C; border: 1px solid #EF9A9A; }
+    .badge-riesgo-critico { background-color: #F3E5F5; color: #4A148C; border: 1px solid #CE93D8; }
+
+    /* ============================================================
+       CHECKBOXES VISUALES (servicios / espacios)
+    ============================================================ */
+    .check-si {
+      color: #2E7D32;
+      font-weight: bold;
+    }
+
+    .check-no {
+      color: #B71C1C;
+    }
+
+    /* ============================================================
+       DATOS EN LÍNEA (etiqueta: valor)
+    ============================================================ */
+    .dato-linea {
+      margin-bottom: 3pt;
+      font-size: 8.5pt;
+    }
+
+    .dato-linea strong {
+      color: var(--color-texto-suave);
+      min-width: 110pt;
+      display: inline-block;
+    }
+
+    /* ============================================================
+       BLOQUE DE TEXTO (observaciones, conclusiones)
+    ============================================================ */
+    .bloque-texto {
+      background-color: var(--color-fondo-alterno);
+      border: 1px solid var(--color-borde);
+      border-left: 3px solid var(--color-primario);
+      padding: 6pt 8pt;
+      font-size: 8.5pt;
+      color: var(--color-texto);
+      margin-bottom: 6pt;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .bloque-texto-sin-datos {
+      color: var(--color-texto-suave);
+      font-style: italic;
+    }
+
+    /* ============================================================
+       TARJETA DE REFERENCIA
+    ============================================================ */
+    .tarjeta-referencia {
+      border: 1px solid var(--color-borde);
+      margin-bottom: 8pt;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    .tarjeta-referencia-header {
+      background-color: var(--color-primario-claro);
+      padding: 5pt 8pt;
+      border-bottom: 1px solid var(--color-borde);
+      display: table;
+      width: 100%;
+    }
+
+    .tarjeta-referencia-header .ref-nombre {
+      font-weight: bold;
+      font-size: 9pt;
+      color: var(--color-primario-oscuro);
+      display: table-cell;
+      vertical-align: middle;
+    }
+
+    .tarjeta-referencia-header .ref-badge {
+      display: table-cell;
+      text-align: right;
+      vertical-align: middle;
+    }
+
+    .tarjeta-referencia-body {
+      padding: 6pt 8pt;
+    }
+
+    /* ============================================================
+       FOTOS
+    ============================================================ */
+    .galeria-fotos {
+      display: table;
+      width: 100%;
+      border-spacing: 8pt;
+    }
+
+    .galeria-fila {
+      display: table-row;
+    }
+
+    .galeria-celda {
+      display: table-cell;
+      width: 50%;
+      vertical-align: top;
+      text-align: center;
+      padding: 4pt;
+      border: 1px solid var(--color-borde);
+    }
+
+    .galeria-celda img {
+      max-width: 100%;
+      max-height: 9cm;
+      object-fit: cover;
+    }
+
+    .galeria-celda .foto-pie {
+      font-size: 7.5pt;
+      color: var(--color-texto-suave);
+      margin-top: 3pt;
+    }
+
+    /* ============================================================
+       IMAGEN DE MAPA
+    ============================================================ */
+    .contenedor-mapa {
+      text-align: center;
+      border: 1px solid var(--color-borde);
+      padding: 4pt;
+      margin: 8pt 0;
+    }
+
+    .contenedor-mapa img {
+      width: 100%;
+      max-height: 12cm;
+      object-fit: contain;
+    }
+
+    /* ============================================================
+       PORTADA
+    ============================================================ */
+    .portada-header {
+      display: table;
+      width: 100%;
+      border-bottom: 2px solid var(--color-primario);
+      padding-bottom: 8pt;
+      margin-bottom: 12pt;
+    }
+
+    .portada-header .logo-empresa {
+      display: table-cell;
+      vertical-align: middle;
+      width: 60%;
+    }
+
+    .portada-header .logo-empresa img {
+      max-height: 2.5cm;
+      max-width: 6cm;
+      object-fit: contain;
+    }
+
+    .portada-header .logo-empresa .empresa-nombre-texto {
+      font-size: 14pt;
+      font-weight: bold;
+      color: var(--color-primario);
+    }
+
+    .portada-header .folio-info {
+      display: table-cell;
+      vertical-align: middle;
+      text-align: right;
+      width: 40%;
+    }
+
+    .portada-folio {
+      font-size: 11pt;
+      font-weight: bold;
+      color: var(--color-primario-oscuro);
+    }
+
+    .portada-fecha {
+      font-size: 8pt;
+      color: var(--color-texto-suave);
+      margin-top: 2pt;
+    }
+
+    .portada-cuerpo {
+      display: table;
+      width: 100%;
+      margin-top: 8pt;
+    }
+
+    .portada-cuerpo .col-candidato {
+      display: table-cell;
+      vertical-align: top;
+      width: 65%;
+      padding-right: 12pt;
+    }
+
+    .portada-cuerpo .col-foto {
+      display: table-cell;
+      vertical-align: top;
+      width: 35%;
+      text-align: center;
+    }
+
+    .portada-nombre-candidato {
+      font-size: 16pt;
+      font-weight: bold;
+      color: var(--color-texto);
+      margin-bottom: 4pt;
+    }
+
+    .portada-tipo-estudio {
+      font-size: 9pt;
+      color: var(--color-texto-suave);
+      margin-bottom: 12pt;
+    }
+
+    .portada-foto-candidato {
+      max-width: 5cm;
+      max-height: 6cm;
+      object-fit: cover;
+      border: 2px solid var(--color-primario);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .portada-foto-placeholder {
+      width: 5cm;
+      height: 6cm;
+      border: 2px dashed var(--color-borde);
+      display: table-cell;
+      vertical-align: middle;
+      text-align: center;
+      color: var(--color-texto-suave);
+      font-size: 8pt;
+      margin: 0 auto;
+    }
+
+    .caja-conclusiones {
+      border: 1.5px solid var(--color-primario);
+      margin-top: 10pt;
+    }
+
+    .caja-conclusiones-titulo {
+      background-color: var(--color-primario);
+      color: #ffffff;
+      font-size: 9pt;
+      font-weight: bold;
+      padding: 4pt 8pt;
+      letter-spacing: 0.5pt;
+      text-transform: uppercase;
+    }
+
+    .caja-conclusiones-cuerpo {
+      padding: 8pt;
+    }
+
+    .caja-conclusion-item {
+      margin-bottom: 8pt;
+    }
+
+    .caja-conclusion-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .caja-conclusion-label {
+      font-size: 8pt;
+      font-weight: bold;
+      color: var(--color-primario-oscuro);
+      text-transform: uppercase;
+      margin-bottom: 3pt;
+    }
+
+    .caja-conclusion-texto {
+      font-size: 8.5pt;
+      color: var(--color-texto);
+      background-color: var(--color-fondo-alterno);
+      padding: 5pt 7pt;
+      border-left: 2px solid var(--color-primario);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+
+    .puntuacion-grande {
+      font-size: 22pt;
+      font-weight: bold;
+      color: var(--color-primario);
+      display: block;
+      text-align: center;
+      line-height: 1;
+    }
+
+    .puntuacion-label {
+      font-size: 7.5pt;
+      color: var(--color-texto-suave);
+      text-align: center;
+      display: block;
+    }
+
+    .caja-score {
+      border: 1px solid var(--color-borde);
+      padding: 6pt 10pt;
+      text-align: center;
+      display: inline-block;
+      min-width: 70pt;
+      margin-top: 6pt;
+    }
+
+    .portada-pie {
+      border-top: 1px solid var(--color-borde);
+      margin-top: 14pt;
+      padding-top: 6pt;
+      font-size: 7.5pt;
+      color: var(--color-texto-suave);
+      display: table;
+      width: 100%;
+    }
+
+    .portada-pie .pie-izq {
+      display: table-cell;
+      text-align: left;
+    }
+
+    .portada-pie .pie-der {
+      display: table-cell;
+      text-align: right;
+    }
+
+    /* ============================================================
+       TABLA DE INGRESOS Y EGRESOS
+    ============================================================ */
+    .tabla-finanzas td.monto {
+      text-align: right;
+      font-weight: bold;
+    }
+
+    .tabla-finanzas tr.total-row td {
+      background-color: var(--color-primario-claro);
+      font-weight: bold;
+      color: var(--color-primario-oscuro);
+    }
+
+    .tabla-finanzas tr.ahorro-positivo td {
+      background-color: #E8F5E9;
+      color: #1B5E20;
+      font-weight: bold;
+    }
+
+    .tabla-finanzas tr.ahorro-negativo td {
+      background-color: #FFEBEE;
+      color: #B71C1C;
+      font-weight: bold;
+    }
+
+    /* ============================================================
+       BARRA DE PUNTUACIÓN VISUAL
+    ============================================================ */
+    .barra-contenedor {
+      display: table;
+      width: 100%;
+      margin-bottom: 3pt;
+    }
+
+    .barra-etiqueta {
+      display: table-cell;
+      width: 40%;
+      font-size: 8pt;
+      vertical-align: middle;
+      padding-right: 6pt;
+    }
+
+    .barra-track {
+      display: table-cell;
+      vertical-align: middle;
+    }
+
+    .barra-fondo {
+      background-color: var(--color-borde);
+      height: 8pt;
+      border-radius: 4pt;
+      overflow: hidden;
+    }
+
+    .barra-relleno {
+      height: 100%;
+      background-color: var(--color-primario);
+      border-radius: 4pt;
+    }
+
+    .barra-valor {
+      display: table-cell;
+      width: 30pt;
+      text-align: right;
+      font-size: 8pt;
+      font-weight: bold;
+      vertical-align: middle;
+      padding-left: 4pt;
+      color: var(--color-primario-oscuro);
+    }
+
+    /* ============================================================
+       MENSAJE SIN DATOS
+    ============================================================ */
+    .sin-datos {
+      text-align: center;
+      color: var(--color-texto-suave);
+      font-style: italic;
+      padding: 12pt;
+      border: 1px dashed var(--color-borde);
+      font-size: 8.5pt;
+    }
+  </style>
+</head>
+<body>
+  {% include "reportes/_pdf_portada.html" %}
+  {% include "reportes/_pdf_datos_personales.html" %}
+  {% include "reportes/_pdf_salud_familia.html" %}
+  {% include "reportes/_pdf_inmueble_economia.html" %}
+  {% include "reportes/_pdf_referencias.html" %}
+  {% include "reportes/_pdf_croquis.html" %}
+  {% include "reportes/_pdf_fotos.html" %}
+</body>
+</html>

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Nivel educativo — {{ niveleducativo.nivel }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs text-gray-500 flex items-center gap-1.5">
+    <a href="{% url 'home' %}" class="hover:text-purple-600">Inicio</a>
+    <span>/</span>
+    <a href="{% url 'educacion:niveleducativo_list' %}" class="hover:text-purple-600">Niveles educativos</a>
+    <span>/</span>
+    <span class="text-gray-800 font-medium">{{ niveleducativo.nivel }}</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-lg">
+  <!-- Encabezado -->
+  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-900">{{ niveleducativo.nivel }}</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Nivel educativo del catálogo</p>
+    </div>
+    <div class="flex items-center gap-2 self-start">
+      <a href="{% url 'educacion:niveleducativo_update' pk=niveleducativo.pk %}"
+         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white rounded-md transition-colors"
+         style="background-color: var(--meraki-purple);"
+         onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+         onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+        </svg>
+        Editar
+      </a>
+      <a href="{% url 'educacion:niveleducativo_delete' pk=niveleducativo.pk %}"
+         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 transition-colors">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+        </svg>
+        Eliminar
+      </a>
+      <a href="{% url 'educacion:niveleducativo_list' %}"
+         class="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Volver
+      </a>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <dl class="space-y-4">
+      <div class="flex justify-between items-center">
+        <dt class="text-sm text-gray-500">Nivel</dt>
+        <dd class="text-sm font-semibold text-gray-900">{{ niveleducativo.nivel }}</dd>
+      </div>
+      <div class="flex justify-between items-center">
+        <dt class="text-sm text-gray-500">Orden en el catálogo</dt>
+        <dd class="inline-flex items-center justify-center h-7 w-7 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+          {{ niveleducativo.orden }}
+        </dd>
+      </div>
+      <div class="flex justify-between items-center">
+        <dt class="text-sm text-gray-500">Estado</dt>
+        <dd>
+          {% if niveleducativo.activo %}
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 border border-green-300">Activo</span>
+          {% else %}
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500 border border-gray-300">Inactivo</span>
+          {% endif %}
+        </dd>
+      </div>
+    </dl>
+  </div>
+</div>
+{% endblock %}

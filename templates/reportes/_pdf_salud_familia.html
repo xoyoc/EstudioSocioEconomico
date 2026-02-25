@@ -1,0 +1,220 @@
+{# ============================================================
+   PÁGINA 3 — HÁBITOS / SALUD + GRUPO FAMILIAR
+   Contexto requerido:
+     - salud: SaludPersona|None
+     - familia: QuerySet[GrupoFamiliar]
+     - persona: Persona (para periodos_sin_laborar y actividades_tiempo_libre,
+                         ya mostrados en pág. 2 si existen, aquí se omiten)
+     - laboral: QuerySet[HistorialLaboral]
+============================================================ #}
+
+<div class="pagina-nueva">
+
+  {# ============================================================
+     SECCIÓN: HÁBITOS Y SALUD
+  ============================================================ #}
+  <div class="seccion-titulo">Hábitos y Salud</div>
+
+  {% if salud %}
+    <table class="tabla-datos" style="margin-bottom:8pt;">
+      <tbody>
+        <tr>
+          <th style="width:30%;">Estado de salud general</th>
+          <td colspan="3">
+            {% if salud.nivel_salud %}
+              {% if salud.nivel_salud == 'EXC' %}
+                <span style="color:#2E7D32; font-weight:bold;">&#11044; Excelente</span>
+              {% elif salud.nivel_salud == 'BUE' %}
+                <span style="color:#388E3C; font-weight:bold;">&#11044; Buena</span>
+              {% elif salud.nivel_salud == 'REG' %}
+                <span style="color:#F57F17; font-weight:bold;">&#11044; Regular</span>
+              {% elif salud.nivel_salud == 'MAL' %}
+                <span style="color:#C62828; font-weight:bold;">&#11044; Mala</span>
+              {% endif %}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    {# Enfermedades crónicas #}
+    <div class="subseccion-titulo">Enfermedades crónicas / Condiciones médicas / Alergias / Discapacidad</div>
+    <div class="bloque-texto {% if not salud.enfermedades_cronicas %}bloque-texto-sin-datos{% endif %}">
+      {% if salud.enfermedades_cronicas %}
+        {{ salud.enfermedades_cronicas }}
+      {% else %}
+        Ninguna reportada
+      {% endif %}
+    </div>
+
+    {# Antecedentes familiares #}
+    <div class="subseccion-titulo">Antecedentes de Enfermedades Familiares</div>
+    <div class="bloque-texto {% if not salud.antecedentes_familiares %}bloque-texto-sin-datos{% endif %}">
+      {% if salud.antecedentes_familiares %}
+        {{ salud.antecedentes_familiares }}
+      {% else %}
+        Sin antecedentes reportados
+      {% endif %}
+    </div>
+
+    {# Consumo de sustancias #}
+    <div class="subseccion-titulo">Consumo de Sustancias</div>
+    <div class="bloque-texto {% if not salud.consumo_sustancias %}bloque-texto-sin-datos{% endif %}">
+      {% if salud.consumo_sustancias %}
+        {{ salud.consumo_sustancias }}
+      {% else %}
+        No reporta consumo de sustancias
+      {% endif %}
+    </div>
+
+  {% else %}
+    <div class="sin-datos">No se registró información de salud para este candidato</div>
+  {% endif %}
+
+  {# ============================================================
+     SECCIÓN: HISTORIAL LABORAL (resumen tabular)
+  ============================================================ #}
+  <div class="seccion-titulo" style="margin-top:14pt;">Historial Laboral</div>
+
+  {% if laboral %}
+    <table>
+      <thead>
+        <tr>
+          <th>Empresa / Tel.</th>
+          <th>Puesto</th>
+          <th>Período</th>
+          <th style="text-align:right;">Salario</th>
+          <th>Motivo de separación</th>
+          <th style="text-align:center;">Verificada</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for empleo in laboral %}
+          <tr>
+            <td>
+              {{ empleo.empresa|default:"N/A" }}
+              <br><span style="color:#888; font-size:7.5pt;">
+                Tel: {{ empleo.telefono_empresa|default:"N/D" }}
+              </span>
+            </td>
+            <td>{{ empleo.puesto|default:"N/A" }}</td>
+            <td style="white-space:nowrap;">
+              {% if empleo.fecha_inicio %}{{ empleo.fecha_inicio|date:"m/Y" }}{% else %}N/A{% endif %}
+              &nbsp;–&nbsp;
+              {% if empleo.es_trabajo_actual %}
+                Actual
+              {% elif empleo.fecha_fin %}
+                {{ empleo.fecha_fin|date:"m/Y" }}
+              {% else %}
+                N/D
+              {% endif %}
+            </td>
+            <td style="text-align:right; white-space:nowrap;">
+              ${{ empleo.salario_inicial|floatformat:0 }}
+              {% if empleo.salario_final and empleo.salario_final != empleo.salario_inicial %}
+                <br><span style="font-size:7.5pt; color:#888;">Final: ${{ empleo.salario_final|floatformat:0 }}</span>
+              {% endif %}
+            </td>
+            <td>{{ empleo.motivo_separacion|default:"N/A" }}</td>
+            <td style="text-align:center;">
+              {% if empleo.verificada %}
+                <span class="check-si">&#10003;</span>
+              {% else %}
+                <span class="check-no">&#10007;</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="sin-datos">No se registró historial laboral</div>
+  {% endif %}
+
+  {# ============================================================
+     SECCIÓN: GRUPO FAMILIAR
+  ============================================================ #}
+  <div class="seccion-titulo" style="margin-top:14pt;">Grupo Familiar</div>
+
+  {% if familia %}
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre completo</th>
+          <th>Parentesco</th>
+          <th style="text-align:center;">Edad</th>
+          <th>Ocupación</th>
+          <th>Escolaridad</th>
+          <th>Dependencia</th>
+          <th style="text-align:center;">Vive en domicilio</th>
+          <th style="text-align:center;">Aporta ingreso</th>
+          <th style="text-align:right;">Aportación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for miembro in familia %}
+          <tr>
+            <td>{{ miembro.nombre_completo|default:"N/A" }}</td>
+            <td>{{ miembro.parentesco|default:"N/A" }}</td>
+            <td style="text-align:center;">{{ miembro.edad }}</td>
+            <td>{{ miembro.ocupacion|default:"N/A" }}</td>
+            <td>{{ miembro.escolaridad|default:"N/A" }}</td>
+            <td>{{ miembro.get_tipo_dependencia_display|default:"N/A" }}</td>
+            <td style="text-align:center;">
+              {% if miembro.vive_en_domicilio %}
+                <span class="check-si">&#10003;</span>
+              {% else %}
+                <span class="check-no" title="{{ miembro.ciudad_residencia }}">&#10007;{% if miembro.ciudad_residencia %} ({{ miembro.ciudad_residencia }}){% endif %}</span>
+              {% endif %}
+            </td>
+            <td style="text-align:center;">
+              {% if miembro.aporta_ingreso %}
+                <span class="check-si">&#10003;</span>
+              {% else %}
+                <span class="check-no">&#10007;</span>
+              {% endif %}
+            </td>
+            <td style="text-align:right;">
+              {% if miembro.aporta_ingreso and miembro.monto_aportacion %}
+                ${{ miembro.monto_aportacion|floatformat:0 }}
+              {% else %}
+                —
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    {# Teléfonos de familiares (si alguno tiene) #}
+    {% with familiares_con_tel=familia|dictsort:"nombre_completo" %}
+      {% for miembro in familiares_con_tel %}
+        {% if miembro.telefono %}
+          {# Se muestra al pie de la tabla si existe alguno #}
+        {% endif %}
+      {% endfor %}
+    {% endwith %}
+
+  {% else %}
+    <div class="sin-datos">No se registraron integrantes del grupo familiar</div>
+  {% endif %}
+
+  {# --- Telefonos de familiares (nota al pie si alguno tiene) --- #}
+  {% if familia %}
+    {% for miembro in familia %}
+      {% if miembro.telefono and forloop.first %}
+        <div style="margin-top:5pt; font-size:7.5pt; color:#666;">
+          <strong>Teléfonos familiares: </strong>
+      {% endif %}
+      {% if miembro.telefono %}
+        {{ miembro.nombre_completo }} ({{ miembro.parentesco }}): {{ miembro.telefono }}{% if not forloop.last %} &nbsp;|&nbsp; {% endif %}
+      {% endif %}
+      {% if miembro.telefono and forloop.last %}
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+
+</div>

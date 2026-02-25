@@ -1,0 +1,504 @@
+{% extends "base.html" %}
+
+{% block title %}Reporte de Visita Domiciliaria{% endblock %}
+
+{% block breadcrumbs %}
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs text-gray-500 flex items-center gap-1.5">
+    <a href="{% url 'home' %}" class="hover:text-purple-600">Inicio</a>
+    <span>/</span>
+    {% if estudio %}
+    <a href="{% url 'estudios:estudio_detail' estudio.pk %}" class="hover:text-purple-600">
+      {{ estudio.persona.nombre_completo }}
+    </a>
+    <span>/</span>
+    {% else %}
+    <a href="{% url 'visitas:visitadomiciliaria_list' %}" class="hover:text-purple-600">Visitas</a>
+    <span>/</span>
+    {% endif %}
+    <span class="text-gray-800 font-medium">Reporte de visita</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Evita zoom automático en iOS al enfocar inputs */
+  input[type="text"],
+  input[type="number"],
+  select,
+  textarea {
+    font-size: 16px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto">
+
+  <!-- Encabezado -->
+  <div class="mb-5">
+    <h1 class="text-xl font-bold text-gray-900">Reporte de Visita Domiciliaria</h1>
+    {% if estudio %}
+    <p class="text-sm text-gray-500 mt-1">
+      Candidato: <span class="font-semibold text-gray-700">{{ estudio.persona.nombre_completo }}</span>
+      <span class="font-mono text-purple-700 ml-1">{{ estudio.persona.folio }}</span>
+    </p>
+    {% else %}
+    <p class="text-sm text-gray-500 mt-1">Registra los resultados de la visita domiciliaria.</p>
+    {% endif %}
+  </div>
+
+  <!-- Errores generales del formulario -->
+  {% if form.non_field_errors %}
+  <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+    {% for error in form.non_field_errors %}
+    <p class="text-sm text-red-700">{{ error }}</p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    <!-- Campos hidden: estudio y evaluador -->
+    {% if form.estudio %}{{ form.estudio.as_hidden }}{% endif %}
+    {% if form.evaluador %}{{ form.evaluador.as_hidden }}{% endif %}
+
+    <!-- ============================================================
+         SECCIÓN 1: Ubicación GPS
+         ============================================================ -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+        Ubicación GPS
+      </h3>
+
+      <!-- Botón GPS automático -->
+      <button type="button"
+              id="btn-gps"
+              onclick="obtenerGPS()"
+              class="w-full flex items-center justify-center gap-2 py-3 px-4 mb-4 text-sm font-semibold rounded-xl border-2 transition-all active:scale-95"
+              style="border-color: var(--meraki-purple); color: var(--meraki-purple);">
+        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+        Obtener GPS automático
+      </button>
+
+      <!-- Indicador de estado GPS -->
+      <div id="gps-estado" class="hidden mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium" role="status" aria-live="polite">
+        <!-- El contenido se inyecta desde JS -->
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="{{ form.latitud.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Latitud
+          </label>
+          <input type="number"
+                 name="{{ form.latitud.html_name }}"
+                 id="{{ form.latitud.id_for_label }}"
+                 value="{{ form.latitud.value|default:'' }}"
+                 step="0.000001"
+                 placeholder="Ej: 25.686614"
+                 class="block w-full px-3 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                        {% if form.latitud.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+          {% for error in form.latitud.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.longitud.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Longitud
+          </label>
+          <input type="number"
+                 name="{{ form.longitud.html_name }}"
+                 id="{{ form.longitud.id_for_label }}"
+                 value="{{ form.longitud.value|default:'' }}"
+                 step="0.000001"
+                 placeholder="Ej: -100.316360"
+                 class="block w-full px-3 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 transition-colors
+                        {% if form.longitud.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+          {% for error in form.longitud.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+         SECCIÓN 2: Resultado de la visita
+         ============================================================ -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+        Resultado de la visita
+      </h3>
+
+      <div class="space-y-4">
+        <!-- Checkbox: persona encontrada -->
+        <label class="flex items-center gap-4 p-4 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+               for="{{ form.persona_encontrada.id_for_label }}">
+          <input type="checkbox"
+                 name="{{ form.persona_encontrada.html_name }}"
+                 id="{{ form.persona_encontrada.id_for_label }}"
+                 {% if form.persona_encontrada.value %}checked{% endif %}
+                 class="h-5 w-5 rounded border-gray-300 transition-colors flex-shrink-0"
+                 style="accent-color: var(--meraki-purple);">
+          <div>
+            <span class="text-sm font-semibold text-gray-800 block">Persona encontrada</span>
+            <span class="text-xs text-gray-500">Marca si el candidato se encontraba en el domicilio al momento de la visita</span>
+          </div>
+        </label>
+        {% for error in form.persona_encontrada.errors %}
+        <p class="text-xs text-red-600 -mt-2 ml-1">{{ error }}</p>
+        {% endfor %}
+
+        <!-- Checkbox: verificación domicilio -->
+        <label class="flex items-center gap-4 p-4 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors"
+               for="{{ form.verificacion_domicilio.id_for_label }}">
+          <input type="checkbox"
+                 name="{{ form.verificacion_domicilio.html_name }}"
+                 id="{{ form.verificacion_domicilio.id_for_label }}"
+                 {% if form.verificacion_domicilio.value %}checked{% endif %}
+                 class="h-5 w-5 rounded border-gray-300 transition-colors flex-shrink-0"
+                 style="accent-color: var(--meraki-purple);">
+          <div>
+            <span class="text-sm font-semibold text-gray-800 block">Domicilio verificado</span>
+            <span class="text-xs text-gray-500">¿El domicilio visitado coincide con el declarado en el estudio?</span>
+          </div>
+        </label>
+        {% for error in form.verificacion_domicilio.errors %}
+        <p class="text-xs text-red-600 -mt-2 ml-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ============================================================
+         SECCIÓN 3: Características del entorno
+         ============================================================ -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+        Características del entorno
+      </h3>
+
+      <div class="space-y-5">
+
+        <!-- Tipo de zona -->
+        <div>
+          <label for="{{ form.tipo_zona.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Tipo de zona
+          </label>
+          <select name="{{ form.tipo_zona.html_name }}"
+                  id="{{ form.tipo_zona.id_for_label }}"
+                  class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 bg-white transition-colors
+                         {% if form.tipo_zona.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">
+            <option value="">-- Selecciona --</option>
+            {% for val, label in form.tipo_zona.field.choices %}
+            <option value="{{ val }}" {% if form.tipo_zona.value == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% for error in form.tipo_zona.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <!-- Nivel de seguridad 1-5 -->
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">
+            Nivel de seguridad
+            <span class="text-xs text-gray-400 font-normal ml-1">(1 = Inseguro, 5 = Muy seguro)</span>
+          </p>
+          {% if form.nivel_seguridad.errors %}
+          {% for error in form.nivel_seguridad.errors %}
+          <p class="mb-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+          {% endif %}
+          <div class="flex gap-2">
+            {% for n in "12345" %}
+            <label class="flex-1 cursor-pointer">
+              <input type="radio"
+                     name="{{ form.nivel_seguridad.html_name }}"
+                     value="{{ n }}"
+                     {% if form.nivel_seguridad.value == n %}checked{% endif %}
+                     class="sr-only peer">
+              <div class="flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 border-gray-200 text-center transition-all
+                          peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-700
+                          hover:border-purple-300 hover:bg-purple-50">
+                <span class="text-base font-bold text-gray-700 peer-checked:text-purple-700">{{ n }}</span>
+                <span class="text-xs text-gray-400 leading-tight hidden sm:block">
+                  {% if n == "1" %}Inseg.{% elif n == "2" %}Poco{% elif n == "3" %}Regular{% elif n == "4" %}Seguro{% else %}Muy seg.{% endif %}
+                </span>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="flex justify-between mt-1 px-0.5">
+            <span class="text-xs text-gray-400">Inseguro</span>
+            <span class="text-xs text-gray-400">Muy seguro</span>
+          </div>
+        </div>
+
+        <!-- Nivel de ruido 1-5 -->
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">
+            Nivel de ruido
+            <span class="text-xs text-gray-400 font-normal ml-1">(1 = Muy silencioso, 5 = Muy ruidoso)</span>
+          </p>
+          {% if form.nivel_ruido.errors %}
+          {% for error in form.nivel_ruido.errors %}
+          <p class="mb-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+          {% endif %}
+          <div class="flex gap-2">
+            {% for n in "12345" %}
+            <label class="flex-1 cursor-pointer">
+              <input type="radio"
+                     name="{{ form.nivel_ruido.html_name }}"
+                     value="{{ n }}"
+                     {% if form.nivel_ruido.value == n %}checked{% endif %}
+                     class="sr-only peer">
+              <div class="flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 border-gray-200 text-center transition-all
+                          peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-700
+                          hover:border-purple-300 hover:bg-purple-50">
+                <span class="text-base font-bold text-gray-700">{{ n }}</span>
+                <span class="text-xs text-gray-400 leading-tight hidden sm:block">
+                  {% if n == "1" %}Silenc.{% elif n == "2" %}Bajo{% elif n == "3" %}Medio{% elif n == "4" %}Alto{% else %}Mucho{% endif %}
+                </span>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="flex justify-between mt-1 px-0.5">
+            <span class="text-xs text-gray-400">Silencioso</span>
+            <span class="text-xs text-gray-400">Muy ruidoso</span>
+          </div>
+        </div>
+
+        <!-- Acceso a transporte 1-5 -->
+        <div>
+          <p class="text-sm font-medium text-gray-700 mb-2">
+            Acceso a transporte público
+            <span class="text-xs text-gray-400 font-normal ml-1">(1 = Sin acceso, 5 = Excelente acceso)</span>
+          </p>
+          {% if form.acceso_transporte.errors %}
+          {% for error in form.acceso_transporte.errors %}
+          <p class="mb-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+          {% endif %}
+          <div class="flex gap-2">
+            {% for n in "12345" %}
+            <label class="flex-1 cursor-pointer">
+              <input type="radio"
+                     name="{{ form.acceso_transporte.html_name }}"
+                     value="{{ n }}"
+                     {% if form.acceso_transporte.value == n %}checked{% endif %}
+                     class="sr-only peer">
+              <div class="flex flex-col items-center gap-1 py-2.5 px-1 rounded-xl border-2 border-gray-200 text-center transition-all
+                          peer-checked:border-purple-500 peer-checked:bg-purple-50 peer-checked:text-purple-700
+                          hover:border-purple-300 hover:bg-purple-50">
+                <span class="text-base font-bold text-gray-700">{{ n }}</span>
+                <span class="text-xs text-gray-400 leading-tight hidden sm:block">
+                  {% if n == "1" %}Sin acc.{% elif n == "2" %}Poco{% elif n == "3" %}Regular{% elif n == "4" %}Bueno{% else %}Excelen.{% endif %}
+                </span>
+              </div>
+            </label>
+            {% endfor %}
+          </div>
+          <div class="flex justify-between mt-1 px-0.5">
+            <span class="text-xs text-gray-400">Sin acceso</span>
+            <span class="text-xs text-gray-400">Excelente</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================
+         SECCIÓN 4: Observaciones
+         ============================================================ -->
+    <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 mb-4">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4 pb-2 border-b border-gray-100">
+        Observaciones
+      </h3>
+
+      <div class="space-y-4">
+
+        <div>
+          <label for="{{ form.observaciones_generales.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Observaciones generales
+          </label>
+          <textarea name="{{ form.observaciones_generales.html_name }}"
+                    id="{{ form.observaciones_generales.id_for_label }}"
+                    rows="4"
+                    placeholder="Describe lo observado durante la visita: condiciones del domicilio, entorno, interacción con el candidato..."
+                    class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 resize-none transition-colors
+                           {% if form.observaciones_generales.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">{{ form.observaciones_generales.value|default:'' }}</textarea>
+          {% for error in form.observaciones_generales.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.comentarios_colonos.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Comentarios de colonos / vecinos
+          </label>
+          <textarea name="{{ form.comentarios_colonos.html_name }}"
+                    id="{{ form.comentarios_colonos.id_for_label }}"
+                    rows="3"
+                    placeholder="¿Qué dijeron los vecinos o colonos sobre el candidato o la zona?"
+                    class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 resize-none transition-colors
+                           {% if form.comentarios_colonos.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">{{ form.comentarios_colonos.value|default:'' }}</textarea>
+          {% for error in form.comentarios_colonos.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+        <div>
+          <label for="{{ form.recomendacion.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1.5">
+            Recomendación del inspector
+          </label>
+          <textarea name="{{ form.recomendacion.html_name }}"
+                    id="{{ form.recomendacion.id_for_label }}"
+                    rows="3"
+                    placeholder="¿Cuál es tu recomendación basada en la visita realizada?"
+                    class="block w-full px-4 py-3 text-base border rounded-xl focus:outline-none focus:ring-2 resize-none transition-colors
+                           {% if form.recomendacion.errors %}border-red-400 focus:ring-red-300 bg-red-50{% else %}border-gray-300 focus:ring-purple-300 focus:border-purple-400{% endif %}">{{ form.recomendacion.value|default:'' }}</textarea>
+          {% for error in form.recomendacion.errors %}
+          <p class="mt-1 text-xs text-red-600">{{ error }}</p>
+          {% endfor %}
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================================
+         SECCIÓN 5: Upload de fotos (informativa)
+         ============================================================ -->
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6 flex items-start gap-3">
+      <svg class="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div>
+        <p class="text-sm font-semibold text-blue-800 mb-0.5">Fotos de la visita</p>
+        <p class="text-xs text-blue-600 leading-relaxed">
+          Las fotografías tomadas durante la visita se adjuntan por separado desde la sección de
+          <strong>Documentos</strong> del estudio correspondiente.
+        </p>
+      </div>
+    </div>
+
+    <!-- Botón de envío -->
+    <button type="submit"
+            class="block w-full py-4 px-6 text-center text-white text-base font-bold rounded-2xl shadow-md transition-all active:scale-95"
+            style="background-color: var(--meraki-purple);"
+            onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+            onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+      <svg class="inline-block h-5 w-5 mr-1.5 -mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      Guardar Reporte
+    </button>
+
+    {% if estudio %}
+    <a href="{% url 'estudios:estudio_detail' estudio.pk %}"
+       class="block w-full mt-3 py-3 px-6 text-center text-gray-600 text-sm font-medium rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors">
+      Cancelar
+    </a>
+    {% endif %}
+
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  /**
+   * Solicita la geolocalización del dispositivo y rellena
+   * automáticamente los campos latitud y longitud del formulario.
+   */
+  function obtenerGPS() {
+    const estadoEl = document.getElementById('gps-estado');
+    const btnGps   = document.getElementById('btn-gps');
+
+    if (!navigator.geolocation) {
+      mostrarEstadoGPS('error', 'Tu navegador no soporta geolocalización.');
+      return;
+    }
+
+    // Estado: obteniendo...
+    btnGps.disabled = true;
+    mostrarEstadoGPS('cargando', 'Obteniendo ubicación GPS...');
+
+    navigator.geolocation.getCurrentPosition(
+      function(position) {
+        const lat = position.coords.latitude.toFixed(6);
+        const lng = position.coords.longitude.toFixed(6);
+
+        // Rellena los inputs de latitud y longitud del formulario de Django
+        const campoLat = document.getElementById('{{ form.latitud.id_for_label }}');
+        const campoLng = document.getElementById('{{ form.longitud.id_for_label }}');
+        if (campoLat) campoLat.value = lat;
+        if (campoLng) campoLng.value = lng;
+
+        mostrarEstadoGPS('ok', 'Ubicación obtenida: ' + lat + ', ' + lng);
+        btnGps.disabled = false;
+      },
+      function(error) {
+        const mensajes = {
+          1: 'Permiso de geolocalización denegado. Permite el acceso en tu navegador.',
+          2: 'No se pudo determinar tu posición. Verifica que el GPS esté activo.',
+          3: 'Tiempo de espera agotado. Intenta de nuevo.',
+        };
+        mostrarEstadoGPS('error', mensajes[error.code] || 'Error al obtener GPS.');
+        btnGps.disabled = false;
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  }
+
+  /**
+   * Actualiza el indicador visual de estado del GPS.
+   * @param {'cargando'|'ok'|'error'} tipo
+   * @param {string} mensaje
+   */
+  function mostrarEstadoGPS(tipo, mensaje) {
+    const el = document.getElementById('gps-estado');
+    el.classList.remove('hidden');
+
+    const estilos = {
+      cargando: 'bg-blue-50 text-blue-700 border border-blue-200',
+      ok:       'bg-green-50 text-green-700 border border-green-200',
+      error:    'bg-red-50 text-red-700 border border-red-200',
+    };
+
+    const iconos = {
+      cargando: '<svg class="h-4 w-4 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>',
+      ok:       '<svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+      error:    '<svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+    };
+
+    el.className = 'mb-4 flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium ' + (estilos[tipo] || '');
+    el.innerHTML = (iconos[tipo] || '') + '<span>' + mensaje + '</span>';
+  }
+
+  // Pre-selección de radio buttons de escala: aplica estilos checked vía JS
+  // porque Tailwind peer-checked requiere el estado nativo del input
+  document.addEventListener('DOMContentLoaded', function() {
+    ['nivel_seguridad', 'nivel_ruido', 'acceso_transporte'].forEach(function(campo) {
+      const radios = document.querySelectorAll('input[name="' + campo + '"]');
+      radios.forEach(function(radio) {
+        radio.addEventListener('change', function() {
+          // El estilo peer-checked de Tailwind se aplica automáticamente;
+          // este handler existe por si se necesita lógica adicional.
+        });
+      });
+    });
+  });
+</script>
+{% endblock %}

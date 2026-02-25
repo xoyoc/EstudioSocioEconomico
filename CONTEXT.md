@@ -1,9 +1,9 @@
 # Documento de Contexto Arquitectónico — EstudioEcoNom
 
-**Versión:** 1.1
-**Fecha:** 2026-02-21
+**Versión:** 1.3
+**Fecha:** 2026-02-23
 **Proyecto:** Sistema de Gestión de Estudios Socioeconómicos (EstudioEcoNom)
-**Stack:** Django 6.0.2 · SQLite/PostgreSQL · Tailwind CSS CDN · Python 3.x
+**Stack:** Django 6.0.2 · SQLite/PostgreSQL · Tailwind CSS CDN · WeasyPrint · Python 3.x
 **Idioma:** Español mexicano (`es-mx`) · Zona horaria: `America/Mexico_City`
 
 ---
@@ -52,7 +52,7 @@ apps/
 ├── notificaciones/           ← FK a User + FK a EstudioSocioeconomico
 │
 ├── auditorias/               ← PLACEHOLDER (models.py vacío)
-├── reportes/                 ← PLACEHOLDER (models.py vacío)
+├── reportes/                 ← IMPLEMENTADO: GenerarReportePDFView + VistaPreviewReporteView
 └── api/                      ← PLACEHOLDER (models.py vacío)
 ```
 
@@ -509,7 +509,9 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 
 **Acción admin:** `marcar_verificada` — actualiza `verificada=True` y `fecha_verificacion=now()`
 
-**URLs:** `laboral:historiallaboral_list/create/detail/update/delete`
+**URLs:** `laboral:historiallaboral_list/create/detail/update/delete`, `laboral:historiallaboral_verificar`
+
+**Vista de verificación (`VerificarHistorialLaboralView`):** GET muestra datos del empleo con teléfonos tappables. POST marca `verificada=True` + `fecha_verificacion=now()`. Redirige a `estudios:estudio_detail` si hay `?back=<pk>`. Template: `laboral/historiallaboral_verificar_form.html`.
 
 ---
 
@@ -560,7 +562,9 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 
 **Acción admin:** `marcar_verificada`
 
-**URLs:** `referencias:referencia_list/create/detail/update/delete`
+**URLs:** `referencias:referencia_list/create/detail/update/delete`, `referencias:referencia_verificar`
+
+**Vista de verificación (`VerificarReferenciaView`):** GET muestra datos de la referencia con teléfono tappable. POST guarda campos de verificación (`actividad_tiempo_libre`, `lugares_laborado`, `conducta`, `cualidades`, `comentarios_verificacion`) + marca `verificada=True` + `fecha_verificacion=now()`. Template: `referencias/referencia_verificar_form.html`.
 
 ---
 
@@ -588,7 +592,11 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 
 **NOTA:** Un estudio puede tener múltiples visitas (1..N). La relación es FK, no OneToOne.
 
-**URLs:** `visitas:visitadomiciliaria_list/create/detail/update/delete`
+**URLs:** `visitas:visitadomiciliaria_list/create/detail/update/delete`, `visitas:agenda_inspector`
+
+**Vista de agenda (`AgendaInspectorView`):** Filtra `VisitaDomiciliaria` donde `evaluador=request.user`, ordena por `fecha_visita` ASC. El contexto incluye `visitas_hoy`, `visitas_proximas` y `visitas_pasadas` (listas Python separadas por fecha). Template: `visitas/agenda.html`.
+
+**Template del reporte de visita:** `visitas/visitadomiciliaria_reporte_form.html` — usado tanto por `VisitaDomiciliariaCreateView` como `VisitaDomiciliariaUpdateView`. Incluye captura GPS automática via `navigator.geolocation`, botones radio 1-5 para escalas de entorno, y secciones de observaciones/colonos/recomendación.
 
 ---
 
@@ -669,13 +677,52 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 
 ---
 
-### 2.14 `auditorias`, `reportes`, `api` — Placeholders
+### 2.14 `reportes` — Generación de Reportes PDF
 
-Estas tres apps tienen `models.py` vacíos y ninguna lógica implementada.
+**Propósito:** Genera el reporte PDF final del estudio socioeconómico idéntico al formato de referencia de Meraki (8 páginas).
 
-- **`auditorias`:** Sin urls.py propio — no está en `esteconom/urls.py`. Destinada a log de cambios.
-- **`reportes`:** Sin urls.py propio. Destinada a generación de PDF/Excel.
-- **`api`:** Sin urls.py propio. Destinada a endpoints REST para integraciones.
+**Dependencia:** `weasyprint` (en `requirements.txt`)
+
+**Vistas (`apps/reportes/views.py`):**
+
+| Vista | URL | Descripción |
+|-------|-----|-------------|
+| `VistaPreviewReporteView` | `GET /reportes/estudio/<pk>/preview/` | Renderiza HTML del reporte en el navegador |
+| `GenerarReportePDFView` | `GET /reportes/estudio/<pk>/pdf/` | Descarga `Estudio_<folio>_<fecha>.pdf` |
+
+**Función `_get_contexto_pdf(estudio)`:** Centraliza la recolección de todos los datos del estudio para los templates. Genera automáticamente la URL del mapa estático de OpenStreetMap si hay coordenadas GPS en la visita principal.
+
+**URL del mapa estático (sin API key):**
+```python
+f"https://staticmap.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=16&size=600x300&markers={lat},{lon},red-pushpin"
+```
+
+**Templates (`templates/reportes/`):**
+
+| Template | Página(s) | Contenido |
+|----------|-----------|-----------|
+| `estudio_pdf.html` | — | CSS A4 para WeasyPrint + ensambla todos los parciales |
+| `_pdf_header.html` | — | Componente: logo empresa + folio + estado |
+| `_pdf_portada.html` | 1 | Logo empresa, nombre candidato, score, foto, conclusiones |
+| `_pdf_datos_personales.html` | 2 | Datos personales, IDs, escolaridad, idiomas |
+| `_pdf_salud_familia.html` | 3 | Salud, historial laboral, grupo familiar |
+| `_pdf_inmueble_economia.html` | 4 | Inmueble, servicios/materiales, ingresos, egresos, créditos |
+| `_pdf_referencias.html` | 5 | Referencias verificadas + observaciones de colonos |
+| `_pdf_croquis.html` | 6 | Mapa GPS OpenStreetMap + datos de entorno |
+| `_pdf_fotos.html` | 7-8 | Galería de fotos en tabla 2 columnas |
+
+**CSS del PDF:** CSS puro (no Tailwind), compatible con WeasyPrint. `@page { size: A4; margin: 1.5cm 1.8cm; }`. Layouts de 2 columnas con `display: table/table-cell` (WeasyPrint no soporta flexbox/grid completo).
+
+**Estados que habilitan el PDF:** `COM`, `REV`, `APR`, `REC`. El botón en `estudio_detail.html` está deshabilitado en otros estados.
+
+**URLs:** `reportes:estudio_preview`, `reportes:estudio_pdf`
+
+---
+
+### 2.15 `auditorias`, `api` — Placeholders
+
+- **`auditorias`:** Sin urls.py propio — no está en `esteconom/urls.py`. Destinada a log de cambios con `post_save` signals.
+- **`api`:** Sin urls.py propio. Destinada a endpoints REST con Django REST Framework.
 
 ---
 
@@ -701,7 +748,7 @@ El sistema actualmente usa el modelo `auth.User` estándar de Django sin diferen
 | Aprobar o rechazar estudios | `estudios` (estados APR/REC) |
 | Enviar notificaciones | `notificaciones` |
 | Consultar y gestionar catálogos | `configuracion`, `educacion.NivelEducativo` |
-| Generar y descargar reportes | `reportes` (futuro) |
+| Generar y descargar reporte PDF | `reportes` (implementado — estados COM/REV/APR/REC) |
 | Ver dashboard general | Vista home |
 
 **Flujo de trabajo típico del Colaborador:**
@@ -728,17 +775,16 @@ El sistema actualmente usa el modelo `auth.User` estándar de Django sin diferen
 
 **Flujo de trabajo típico del Personal de Campo:**
 ```
-1. Consulta agenda diaria de visitas asignadas
+1. Accede a /visitas/agenda/ → AgendaInspectorView (visitas asignadas al usuario)
 2. Navega a la dirección (dirección del Domicilio tipo ACT)
-3. Registra VisitaDomiciliaria:
-   - Confirma persona encontrada o no
-   - Captura GPS automático (si hay permisos)
+3. Registra VisitaDomiciliaria via /visitas/crear/?estudio=<pk>&back=<pk>:
+   - Captura GPS automático (botón en el template, usa navigator.geolocation)
+   - Confirma persona encontrada o no + verificación de domicilio
    - Evalúa entorno (tipo zona, seguridad, ruido, transporte, escala 1-5)
-   - Registra si el domicilio coincide con lo declarado
-   - Toma fotos del exterior/interior (sube como Documento tipo FOT)
-4. Redacta observaciones y recomendación
-5. Actualiza domicilio si hay discrepancias
-6. Notifica al colaborador interno que la visita está completa
+   - Redacta observaciones y comentarios de colonos
+4. Verifica referencias telefónicas: /referencias/<pk>/verificar/?back=<pk>
+5. Verifica historial laboral: /laboral/<pk>/verificar/?back=<pk>
+6. Sube fotos como Documento tipo FOT
 ```
 
 ---
@@ -764,37 +810,44 @@ El sistema actualmente usa el modelo `auth.User` estándar de Django sin diferen
 
 ### 4.2 Orden de Implementación Recomendado
 
-**Fase 1 — Base funcional (Semana 1-2)**
-1. Instalar HTMX en `base.html`
-2. Extender `base.html` con navbar completo (menú, notif badge, breadcrumb)
-3. Implementar templates de `personas` (list, detail, form, confirm_delete)
-4. Implementar templates de `estudios` (list, detail, form)
-5. Vista de detalle del estudio como hub central (con tabs o secciones)
+**✅ Fase 1 — Base funcional** *(Completada 2026-02-22)*
+- HTMX, `base.html` con navbar, `home.html` con dashboard, templates de `personas` y `estudios`
+- Autenticación, `LoginRequiredMixin`, `paginate_by`, campos `created_by/updated_by`
 
-**Fase 2 — Datos del expediente (Semana 3-4)**
-6. Templates de `domicilios`
-7. Templates de `educacion` + `idiomas`
-8. Templates de `laboral` con botón de verificación (HTMX)
-9. Templates de `familia`
-10. Templates de `referencias` con botón de verificación
+**✅ Fase 2 — Datos del expediente** *(Completada 2026-02-22)*
+- Templates de `domicilios`, `educacion`, `idiomas`, `laboral`, `familia`, `referencias`, `economia`, `evaluacion`, `documentos`, `saludpersona`
+- `CambiarEstadoView` con validación de `TRANSICIONES_VALIDAS`
 
-**Fase 3 — Proceso y evaluación (Semana 5-6)**
-11. Templates de `documentos` (lista + upload + verificación)
-12. Templates de `visitas` (lista + formulario mobile-first)
-13. Templates de `evaluacion` (formulario de scoring con totales JS)
-14. Lógica de cambio de estado del estudio (vista dedicada + confirmación)
+**✅ Fase 3 — Portal de autogestión del candidato** *(Completada 2026-02-22)*
+- Portal público `/candidato/<uuid>/` — wizard 7 pasos mobile-first
+- `EstudioToken`, `GenerarTokenView`, `RegenerarTokenView`
 
-**Fase 4 — Sistema de soporte (Semana 7-8)**
-15. Templates de `notificaciones` (lista + badge en navbar via HTMX)
-16. Dashboard enriquecido con métricas y estudios recientes
-17. Templates de `configuracion` (catálogos)
-18. Implementar control de acceso por rol (grupos de Django)
+**✅ Fase 4 — App del inspector en campo** *(Completada 2026-02-23)*
+- `AgendaInspectorView` — `/visitas/agenda/`
+- `VerificarReferenciaView` — `/referencias/<pk>/verificar/`
+- `VerificarHistorialLaboralView` — `/laboral/<pk>/verificar/`
+- Template mobile-first para reporte de visita con GPS automático
 
-**Fase 5 — Portal cliente y API (Semana 9-12)**
-19. Portal de cliente (mi-estudio)
-20. API REST con Django REST Framework (`apps/api`)
-21. Sistema de auditoría (`apps/auditorias`)
-22. Generación de reportes PDF (`apps/reportes`)
+**✅ Fase 5 — Generación del reporte PDF** *(Completada 2026-02-23)*
+- `GenerarReportePDFView` + `VistaPreviewReporteView` — `/reportes/estudio/<pk>/pdf/`
+- 9 templates en `templates/reportes/` con CSS A4 para WeasyPrint
+- Mapa estático OpenStreetMap desde coordenadas GPS
+
+**✅ Fase 6 — Notificaciones automáticas** *(Completada 2026-02-24)*
+- `apps/notificaciones/signals.py` — `pre_save` + `post_save` en `EstudioSocioeconomico`: crea notificaciones automáticas al cambiar estado (VIS/PRO/COM/REV/APR/REC/CAN). Notifica a `created_by` + staff en APR/REC/CAN.
+- `apps/notificaciones/context_processors.py` — inyecta `notif_count_global` en todos los templates
+- `apps/notificaciones/views.py` — agrega `MarcarLeidaView`, `MarcarTodasLeidasView`, `NotifCountView`
+- `templates/base.html` — badge HTMX polling cada 30s via `hx-get="/notificaciones/count/"`
+- Configuración de email vía variables de entorno en `settings.py`
+
+**✅ Fase 7 — Roles y control de acceso** *(Completada 2026-02-24)*
+- Nueva app `apps/usuarios/` con `PerfilUsuario` (OneToOne con `auth.User`, `rol`: ANA/INS)
+- `apps/usuarios/signals.py` — auto-crea `PerfilUsuario` al crear `auth.User`
+- `apps/usuarios/mixins.py` — `RolRequeridoMixin`, `AnalistaRequeridoMixin`, `InspectorRequeridoMixin`
+- `apps/usuarios/context_processors.py` — inyecta `perfil_usuario`, `es_analista`, `es_inspector`
+- `apps/usuarios/admin.py` — inline en el admin de User + admin independiente de `PerfilUsuario`
+- Navbar actualizado: menú "Evaluaciones" y "Usuarios" solo visibles para analistas
+- Templates: `mi_perfil.html`, `perfil_form.html`, `usuario_list.html`
 
 ### 4.3 Colores de estado para badges (Tailwind)
 
@@ -923,15 +976,15 @@ def form_valid(self, form):
 
 ### 5.4 Puntos de Extensión Disponibles
 
-1. **Roles de usuario:** Agregar `UserProfile` con FK a `auth.User` y campo `rol` (choices: ANA/CAM/CLI).
+1. **Roles de usuario:** Agregar `PerfilUsuario` con FK a `auth.User` y campo `rol` (choices: ANA/INS). Ver Fase 7 del plan.
 2. **Auditoría:** `apps/auditorias` está vacía. Implementar con `post_save` signals.
 3. **API REST:** `apps/api` está vacía. Implementar con `djangorestframework`.
-4. **Reportes:** `apps/reportes` está vacía. Usar `reportlab` (PDF) o `openpyxl` (Excel).
+4. ~~**Reportes PDF:**~~ ✅ Implementado en `apps/reportes` con WeasyPrint.
 5. **Transiciones de estado formales:** Agregar método `transicionar(nuevo_estado, usuario)` a `EstudioSocioeconomico`.
-6. **Notificaciones automáticas:** Conectar `post_save` signals en modelos clave.
-7. **Configuración de archivos:** Agregar `MEDIA_ROOT` y `MEDIA_URL` a `settings.py`.
-8. **Paginación:** Agregar `paginate_by = 25` a todas las ListViews.
-9. **Búsqueda y filtros:** Agregar `get_queryset()` con filtrado por parámetros GET.
+6. **Notificaciones automáticas:** Conectar `post_save` signals en modelos clave. Ver Fase 6 del plan.
+7. ~~**Configuración de archivos:**~~ ✅ `MEDIA_ROOT` y `MEDIA_URL` configurados en `settings.py`.
+8. ~~**Paginación:**~~ ✅ `paginate_by = 25` en todas las ListViews.
+9. **Búsqueda y filtros:** `PersonaListView` y `EstudioListView` ya tienen `get_queryset()` — extender al resto.
 10. **HTMX parciales:** Crear views que retornen solo fragmentos HTML para operaciones inline.
 
 ---
@@ -940,30 +993,30 @@ def form_valid(self, form):
 
 ### 6.1 Lista Priorizada de Tareas
 
-| # | Tarea | Complejidad | Dependencias | Impacto |
-|---|-------|-------------|-------------|---------|
-| 1 | Configurar `MEDIA_ROOT` y `MEDIA_URL` en settings | Baja | Ninguna | Desbloquea uploads |
-| 2 | Agregar `LoginRequiredMixin` a todas las vistas stub | Baja | Ninguna | Seguridad crítica |
-| 3 | Agregar `paginate_by = 25` a todas las ListViews | Baja | Ninguna | Performance |
-| 4 | Poblar `created_by/updated_by` en form_valid() de todas las vistas | Baja | Ninguna | Integridad de datos |
-| 5 | Templates de `personas` (list + detail + form + confirm) | Media | Tarea 4 | Funcionalidad base |
-| 6 | Templates de `estudios` (list + detail con tabs) | Media | Tarea 5 | Funcionalidad base |
-| 7 | Extender `base.html` con navbar completo y breadcrumbs | Media | Tarea 5 | UX |
-| 8 | Templates de `documentos` con upload y verificación | Media | Tareas 5, 6 | Flujo crítico |
-| 9 | Templates de `visitas` (mobile-first) | Media | Tarea 6 | Personal de campo |
-| 10 | Templates de `evaluacion` con cálculo de score | Media | Tarea 6 | Flujo crítico |
-| 11 | Vista de cambio de estado con validación de transiciones | Alta | Tareas 6, 10 | Máquina de estados |
-| 12 | Templates de `laboral`, `referencias` con verificación inline | Media | Tarea 5 | Verificación |
-| 13 | Templates de `domicilios`, `educacion`, `familia`, `idiomas` | Baja-Media | Tarea 5 | Completud |
-| 14 | Dashboard enriquecido con métricas y KPIs | Alta | Tareas 5-13 | Gestión |
-| 15 | Sistema de roles con `auth.Group` | Alta | Ninguna | Multi-perfil |
-| 16 | Notificaciones automáticas con signals | Alta | Tarea 15 | Automatización |
-| 17 | `apps/auditorias` — modelo y signals | Alta | Tarea 15 | Trazabilidad |
-| 18 | `apps/api` — endpoints REST con DRF | Alta | Tareas 5-14 | Integraciones |
-| 19 | `apps/reportes` — PDF/Excel | Alta | Tareas 5-14 | Entregables |
-| 20 | Portal de cliente (acceso restringido por rol) | Alta | Tareas 15, 18 | Cliente final |
-| 21 | Tests automatizados para modelos y vistas | Alta | Todo lo anterior | Calidad |
-| 22 | Corrección de race condition en folio (`select_for_update`) | Media | Ninguna | Producción segura |
+| # | Tarea | Estado | Impacto |
+|---|-------|--------|---------|
+| 1 | Configurar `MEDIA_ROOT` y `MEDIA_URL` | ✅ Completada | Uploads |
+| 2 | `LoginRequiredMixin` en todas las vistas | ✅ Completada | Seguridad |
+| 3 | `paginate_by = 25` en todas las ListViews | ✅ Completada | Performance |
+| 4 | Poblar `created_by/updated_by` en todas las vistas | ✅ Completada | Integridad |
+| 5 | Templates de `personas` | ✅ Completada | Base |
+| 6 | Templates de `estudios` con tabs | ✅ Completada | Base |
+| 7 | `base.html` con navbar y breadcrumbs | ✅ Completada | UX |
+| 8 | Templates de `documentos` con upload y verificación | ✅ Completada | Flujo crítico |
+| 9 | Templates de `visitas` mobile-first + agenda inspector | ✅ Completada | Campo |
+| 10 | Templates de `evaluacion` con cálculo de score | ✅ Completada | Flujo crítico |
+| 11 | `CambiarEstadoView` con `TRANSICIONES_VALIDAS` | ✅ Completada | Máquina de estados |
+| 12 | Verificación inline `laboral` y `referencias` (campo + vista) | ✅ Completada | Verificación |
+| 13 | Templates de `domicilios`, `educacion`, `familia`, `idiomas`, `salud` | ✅ Completada | Completud |
+| 14 | Portal candidato (wizard 7 pasos, token UUID) | ✅ Completada | Escenario A |
+| 15 | Reporte PDF con WeasyPrint (8 páginas + mapa GPS) | ✅ Completada | Entregable |
+| 16 | Sistema de roles `PerfilUsuario` (ANA/INS) | ✅ Completada | Multi-perfil |
+| 17 | Notificaciones automáticas con `post_save` signals | ✅ Completada | Automatización |
+| 18 | Badge de notificaciones HTMX en navbar | ✅ Completada | UX |
+| 19 | `apps/auditorias` — modelo y signals | ⬜ Pendiente | Trazabilidad |
+| 20 | `apps/api` — endpoints REST con DRF | ⬜ Pendiente | Integraciones |
+| 21 | Tests automatizados para modelos y vistas | ⬜ Pendiente | Calidad |
+| 22 | Race condition en folio (`select_for_update`) | ⬜ Pendiente | Producción |
 
 ---
 
@@ -1036,14 +1089,14 @@ Las siguientes son excepciones al estándar de 3 chars para choices:
 Las siguientes apps están en `INSTALLED_APPS` pero **NO** tienen entrada en `esteconom/urls.py`:
 
 - `apps.auditorias`
-- `apps.reportes`
 - `apps.api`
 
-Al implementarlas, agregar en `esteconom/urls.py`:
+> `apps.reportes` ya está registrada: `path('reportes/', include('apps.reportes.urls'))`.
+
+Al implementar las restantes, agregar en `esteconom/urls.py`:
 ```python
 path('api/', include('apps.api.urls')),
-path('reportes/', include('apps.reportes.urls')),
-# auditorias generalmente no requiere URLs propias (es backend)
+# auditorias generalmente no requiere URLs propias (es backend de signals)
 ```
 
 ---
@@ -1092,5 +1145,4 @@ https://docs.google.com/forms/d/e/1FAIpQLSc75Ncb7ON5zEtl2m8kBHuH971DDD7VGQREtdRf
 
 ---
 
-*Documento actualizado por Claude Code el 2026-02-21.*
-*Versión 1.2 — actualizado el 2026-02-22 tras completar Fase 3 (portal de autogestión del candidato).*
+*Versión 1.4 — actualizado el 2026-02-24 tras completar Fase 6 (notificaciones automáticas con signals + HTMX badge) y Fase 7 (sistema de roles PerfilUsuario ANA/INS + mixins de acceso).*

@@ -1,0 +1,155 @@
+{# ============================================================
+   PÁGINA 6 — CROQUIS / MAPA GPS
+   Contexto requerido:
+     - mapa_url: str|None     (URL de imagen de mapa estático)
+     - visita_principal: VisitaDomiciliaria|None
+     - domicilio_actual: Domicilio|None
+     - persona: Persona
+============================================================ #}
+
+<div class="pagina-nueva">
+
+  <div class="seccion-titulo">Croquis del Domicilio</div>
+
+  {# Dirección de referencia #}
+  {% if domicilio_actual %}
+    <div style="margin-bottom:8pt; font-size:8.5pt; color:#555;">
+      <strong>Domicilio:</strong>
+      {{ domicilio_actual.calle }} #{{ domicilio_actual.numero_exterior }}
+      {% if domicilio_actual.numero_interior %}, Int. {{ domicilio_actual.numero_interior }}{% endif %},
+      Col. {{ domicilio_actual.colonia }},
+      {{ domicilio_actual.municipio }}, {{ domicilio_actual.estado }}
+    </div>
+  {% endif %}
+
+  {# ========== IMAGEN DEL MAPA ========== #}
+  {% if mapa_url %}
+    <div class="contenedor-mapa">
+      <img src="{{ mapa_url }}"
+           alt="Mapa del domicilio de {{ persona.nombre_completo }}"
+           style="width:100%; max-height:12cm; object-fit:contain;">
+    </div>
+  {% else %}
+    <div class="sin-datos" style="min-height:6cm; display:table-cell; vertical-align:middle; width:100%;">
+      No se registraron coordenadas GPS durante la visita domiciliaria.<br>
+      <span style="font-size:8pt;">El croquis no puede generarse sin coordenadas de ubicación.</span>
+    </div>
+  {% endif %}
+
+  {# ========== DATOS GPS Y DE LA VISITA ========== #}
+  {% if visita_principal %}
+    <div class="subseccion-titulo" style="margin-top:10pt;">Datos de Geolocalización</div>
+    <table class="tabla-datos">
+      <tbody>
+        <tr>
+          <th style="width:30%;">Latitud</th>
+          <td style="width:20%; font-family:'Courier New',monospace; font-size:8pt;">
+            {% if visita_principal.latitud %}
+              {{ visita_principal.latitud }}
+            {% else %}
+              No registrada
+            {% endif %}
+          </td>
+          <th style="width:25%;">Longitud</th>
+          <td style="font-family:'Courier New',monospace; font-size:8pt;">
+            {% if visita_principal.longitud %}
+              {{ visita_principal.longitud }}
+            {% else %}
+              No registrada
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Tipo de zona</th>
+          <td>{{ visita_principal.get_tipo_zona_display|default:"N/A" }}</td>
+          <th>Nivel de seguridad</th>
+          <td>
+            {% if visita_principal.nivel_seguridad %}
+              {# Representación gráfica del nivel de seguridad 1-5 #}
+              {% for i in "12345" %}
+                {% if forloop.counter <= visita_principal.nivel_seguridad %}
+                  <span style="color:#9B8EC4; font-size:10pt;">&#9733;</span>
+                {% else %}
+                  <span style="color:#ddd; font-size:10pt;">&#9733;</span>
+                {% endif %}
+              {% endfor %}
+              ({{ visita_principal.nivel_seguridad }}/5)
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Nivel de ruido</th>
+          <td>
+            {% if visita_principal.nivel_ruido %}
+              {% for i in "12345" %}
+                {% if forloop.counter <= visita_principal.nivel_ruido %}
+                  <span style="color:#9B8EC4; font-size:10pt;">&#9733;</span>
+                {% else %}
+                  <span style="color:#ddd; font-size:10pt;">&#9733;</span>
+                {% endif %}
+              {% endfor %}
+              ({{ visita_principal.nivel_ruido }}/5)
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+          <th>Acceso a transporte</th>
+          <td>
+            {% if visita_principal.acceso_transporte %}
+              {% for i in "12345" %}
+                {% if forloop.counter <= visita_principal.acceso_transporte %}
+                  <span style="color:#9B8EC4; font-size:10pt;">&#9733;</span>
+                {% else %}
+                  <span style="color:#ddd; font-size:10pt;">&#9733;</span>
+                {% endif %}
+              {% endfor %}
+              ({{ visita_principal.acceso_transporte }}/5)
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Fecha de visita</th>
+          <td>{{ visita_principal.fecha_visita|date:"d/m/Y H:i" }}</td>
+          <th>Evaluador</th>
+          <td>
+            {% if visita_principal.evaluador %}
+              {{ visita_principal.evaluador.get_full_name|default:visita_principal.evaluador.username }}
+            {% else %}
+              N/A
+            {% endif %}
+          </td>
+        </tr>
+        <tr>
+          <th>Persona encontrada</th>
+          <td>{% if visita_principal.persona_encontrada %}Sí{% else %}No{% endif %}</td>
+          <th>Domicilio verificado</th>
+          <td>{% if visita_principal.verificacion_domicilio %}Confirmado{% else %}No confirmado{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    {# Observaciones de la visita (si no se mostraron en pág. 5) #}
+    {% if visita_principal.observaciones_generales and not referencias %}
+      <div class="subseccion-titulo" style="margin-top:8pt;">Observaciones de la Visita</div>
+      <div class="bloque-texto">{{ visita_principal.observaciones_generales }}</div>
+    {% endif %}
+
+  {% else %}
+    <div style="margin-top:8pt; font-size:8.5pt; color:#888; font-style:italic;">
+      No se encontraron datos de visita domiciliaria registrados en el sistema.
+    </div>
+  {% endif %}
+
+  {# Nota técnica al pie #}
+  {% if mapa_url %}
+    <div style="margin-top:8pt; font-size:7pt; color:#aaa; text-align:center; border-top:1px solid #eee; padding-top:4pt;">
+      Mapa generado mediante API de cartografía estática. Las coordenadas corresponden al punto registrado
+      durante la visita domiciliaria. La imagen puede no reflejar cambios recientes en la vialidad.
+    </div>
+  {% endif %}
+
+</div>

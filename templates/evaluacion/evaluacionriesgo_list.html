@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Evaluaciones de riesgo{% endblock %}
+
+{% block breadcrumbs %}
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs text-gray-500 flex items-center gap-1.5">
+    <a href="{% url 'home' %}" class="hover:text-purple-600">Inicio</a>
+    <span>/</span>
+    <span class="text-gray-800 font-medium">Evaluaciones de riesgo</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Encabezado -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Evaluaciones de riesgo</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Scoring y nivel de riesgo por estudio socioeconómico</p>
+  </div>
+  <a href="{% url 'evaluacion:evaluacionriesgo_create' %}"
+     class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors self-start sm:self-auto"
+     style="background-color: var(--meraki-purple);"
+     onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+     onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+    </svg>
+    Nueva evaluación
+  </a>
+</div>
+
+{% if evaluaciones %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div class="overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Persona / Folio
+          </th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+            Score final
+          </th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Nivel de riesgo
+          </th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+            Evaluador
+          </th>
+          <th scope="col" class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+            Recomendación
+          </th>
+          <th scope="col" class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Acciones
+          </th>
+        </tr>
+      </thead>
+      <tbody class="bg-white divide-y divide-gray-100">
+        {% for ev in evaluaciones %}
+        <tr class="hover:bg-purple-50 transition-colors">
+          <!-- Persona / Folio -->
+          <td class="px-4 py-3">
+            <a href="{% url 'evaluacion:evaluacionriesgo_detail' pk=ev.pk %}"
+               class="block text-sm font-medium text-gray-900 hover:text-purple-700">
+              {{ ev.estudio.persona.nombre_completo }}
+            </a>
+            <span class="text-xs font-mono text-purple-600">{{ ev.estudio.persona.folio }}</span>
+          </td>
+          <!-- Score final con barra de progreso -->
+          <td class="px-4 py-3 hidden sm:table-cell">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 bg-gray-200 rounded-full h-2 w-24">
+                <div class="h-2 rounded-full transition-all
+                  {% if ev.score_final >= 75 %}bg-green-500
+                  {% elif ev.score_final >= 50 %}bg-yellow-500
+                  {% elif ev.score_final >= 25 %}bg-orange-500
+                  {% else %}bg-red-500{% endif %}"
+                  style="width: {{ ev.score_final }}%"></div>
+              </div>
+              <span class="text-sm font-semibold text-gray-700 w-10 text-right">{{ ev.score_final }}</span>
+            </div>
+          </td>
+          <!-- Nivel de riesgo -->
+          <td class="px-4 py-3 whitespace-nowrap">
+            {% include 'components/badge_riesgo.html' with riesgo=ev.nivel_riesgo %}
+          </td>
+          <!-- Evaluador -->
+          <td class="px-4 py-3 hidden md:table-cell">
+            <span class="text-sm text-gray-600">{{ ev.evaluador.get_full_name|default:ev.evaluador.username|default:"—" }}</span>
+          </td>
+          <!-- Recomendación (truncada) -->
+          <td class="px-4 py-3 hidden lg:table-cell max-w-xs">
+            <span class="text-sm text-gray-600 line-clamp-2">{{ ev.recomendacion_final|truncatechars:80 }}</span>
+          </td>
+          <!-- Acciones -->
+          <td class="px-4 py-3 whitespace-nowrap text-right">
+            <div class="flex items-center justify-end gap-1.5">
+              <a href="{% url 'evaluacion:evaluacionriesgo_detail' pk=ev.pk %}"
+                 class="p-1.5 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors"
+                 title="Ver detalle">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                </svg>
+              </a>
+              <a href="{% url 'evaluacion:evaluacionriesgo_update' pk=ev.pk %}"
+                 class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                 title="Editar">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+              </a>
+              <a href="{% url 'evaluacion:evaluacionriesgo_delete' pk=ev.pk %}"
+                 class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                 title="Eliminar">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include 'components/pagination.html' with page_obj=page_obj %}
+{% else %}
+{% url 'evaluacion:evaluacionriesgo_create' as create_url %}
+{% include 'components/empty_state.html' with empty_title="Sin evaluaciones registradas" empty_message="Aún no se han capturado evaluaciones de riesgo. Inicia registrando la primera." empty_action_url=create_url empty_action_text="Nueva evaluación" %}
+{% endif %}
+{% endblock %}

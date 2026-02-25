@@ -10,4 +10,5 @@ urlpatterns = [
     path('<int:pk>/', views.ReferenciaDetailView.as_view(), name='referencia_detail'),
     path('<int:pk>/editar/', views.ReferenciaUpdateView.as_view(), name='referencia_update'),
     path('<int:pk>/eliminar/', views.ReferenciaDeleteView.as_view(), name='referencia_delete'),
+    path('<int:pk>/verificar/', views.VerificarReferenciaView.as_view(), name='referencia_verificar'),
 ]

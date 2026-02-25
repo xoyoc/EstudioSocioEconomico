@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Notificaciones{% endblock %}
+
+{% block breadcrumbs %}
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs text-gray-500 flex items-center gap-1.5">
+    <a href="{% url 'home' %}" class="hover:text-purple-600">Inicio</a>
+    <span>/</span>
+    <span class="text-gray-800 font-medium">Notificaciones</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{# ------------------------------------------------------------------ #}
+{# Encabezado con contador y acción global                             #}
+{# ------------------------------------------------------------------ #}
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+  <div class="flex items-center gap-3">
+    <h1 class="text-2xl font-bold text-gray-900">Notificaciones</h1>
+    {% if no_leidas %}
+    <span class="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full"
+          aria-label="{{ no_leidas }} notificaciones sin leer">
+      {{ no_leidas }}
+    </span>
+    {% endif %}
+  </div>
+
+  {% if no_leidas %}
+  {# POST hx-notificaciones:marcar_todas_leidas — marca todas como leídas y recarga #}
+  <form method="post"
+        action="{% url 'notificaciones:marcar_todas_leidas' %}"
+        hx-post="{% url 'notificaciones:marcar_todas_leidas' %}"
+        hx-swap="none"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+        hx-on::after-request="window.location.reload()">
+    {% csrf_token %}
+    <button type="submit"
+            class="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white rounded-lg transition-colors"
+            style="background-color: var(--meraki-purple);"
+            onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+            onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+      {# Ícono de doble palomita #}
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 13l4 4" opacity="0.5"/>
+      </svg>
+      Marcar todas como leídas
+    </button>
+  </form>
+  {% endif %}
+</div>
+
+{# ------------------------------------------------------------------ #}
+{# Lista de notificaciones                                              #}
+{# ------------------------------------------------------------------ #}
+{% if notificaciones %}
+<div class="space-y-3" id="lista-notificaciones">
+  {% for notif in notificaciones %}
+
+  {# Tarjeta individual — color de fondo según estado de lectura #}
+  <div id="notif-{{ notif.pk }}"
+       class="rounded-xl border shadow-sm transition-colors
+              {% if notif.leida %}bg-white border-gray-200{% else %}bg-purple-50 border-purple-200{% endif %}">
+    <div class="p-4 sm:p-5">
+      <div class="flex items-start gap-4">
+
+        {# --- Ícono de tipo --- #}
+        <div class="flex-shrink-0 mt-0.5">
+          {% if notif.tipo == 'PRO' %}
+          <span class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-blue-100 text-blue-700"
+                title="{{ notif.get_tipo_display }}">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </span>
+          {% elif notif.tipo == 'VIS' %}
+          <span class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-cyan-100 text-cyan-700"
+                title="{{ notif.get_tipo_display }}">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </span>
+          {% elif notif.tipo == 'DOC' %}
+          <span class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-yellow-100 text-yellow-700"
+                title="{{ notif.get_tipo_display }}">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </span>
+          {% elif notif.tipo == 'APR' %}
+          <span class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-green-100 text-green-700"
+                title="{{ notif.get_tipo_display }}">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </span>
+          {% elif notif.tipo == 'REC' %}
+          <span class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-red-100 text-red-700"
+                title="{{ notif.get_tipo_display }}">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </span>
+          {% else %}{# SIS #}
+          <span class="inline-flex items-center justify-center h-9 w-9 rounded-full bg-gray-100 text-gray-500"
+                title="{{ notif.get_tipo_display }}">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </span>
+          {% endif %}
+        </div>
+
+        {# --- Contenido principal --- #}
+        <div class="flex-1 min-w-0">
+          <div class="flex flex-wrap items-center gap-2 mb-1">
+            {# Badge de tipo #}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+              {% if notif.tipo == 'PRO' %}bg-blue-100 text-blue-700
+              {% elif notif.tipo == 'VIS' %}bg-cyan-100 text-cyan-700
+              {% elif notif.tipo == 'DOC' %}bg-yellow-100 text-yellow-700
+              {% elif notif.tipo == 'APR' %}bg-green-100 text-green-700
+              {% elif notif.tipo == 'REC' %}bg-red-100 text-red-700
+              {% else %}bg-gray-100 text-gray-600{% endif %}">
+              {{ notif.get_tipo_display }}
+            </span>
+
+            {# Badge de prioridad #}
+            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+              {% if notif.prioridad == 'ALT' %}bg-red-100 text-red-700
+              {% elif notif.prioridad == 'MED' %}bg-yellow-100 text-yellow-700
+              {% else %}bg-green-100 text-green-700{% endif %}"
+                  aria-label="Prioridad {{ notif.get_prioridad_display }}">
+              {{ notif.get_prioridad_display }}
+            </span>
+
+            {# Indicador visual de no leída #}
+            {% if not notif.leida %}
+            <span class="inline-flex items-center gap-1 text-xs font-medium text-purple-700">
+              <span class="h-1.5 w-1.5 rounded-full bg-purple-500 inline-block"></span>
+              Nueva
+            </span>
+            {% endif %}
+          </div>
+
+          {# Título con enlace al detalle #}
+          <a href="{% url 'notificaciones:notificacion_detail' pk=notif.pk %}"
+             class="block text-sm font-semibold {% if notif.leida %}text-gray-800{% else %}text-gray-900{% endif %} hover:text-purple-700 leading-snug mb-1">
+            {{ notif.titulo }}
+          </a>
+
+          {# Mensaje truncado a 2 líneas #}
+          <p class="text-sm text-gray-500 line-clamp-2 leading-relaxed mb-2">
+            {{ notif.mensaje }}
+          </p>
+
+          {# Meta: fecha y enlace al estudio #}
+          <div class="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+            <time datetime="{{ notif.created_at|date:'c' }}">
+              {{ notif.created_at|date:"d/m/Y H:i" }}
+            </time>
+            {% if notif.estudio %}
+            <span aria-hidden="true">&middot;</span>
+            <a href="{% url 'estudios:estudio_detail' pk=notif.estudio.pk %}"
+               class="text-purple-600 hover:text-purple-800 hover:underline font-medium">
+              Estudio: {{ notif.estudio.persona.nombre_completo }}
+            </a>
+            {% endif %}
+            {% if notif.leida and notif.fecha_lectura %}
+            <span aria-hidden="true">&middot;</span>
+            <span>Leída el {{ notif.fecha_lectura|date:"d/m/Y H:i" }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {# --- Acciones de la tarjeta --- #}
+        <div class="flex-shrink-0 flex flex-col items-end gap-2">
+          {# Botón "Marcar como leída" solo si no ha sido leída — HTMX #}
+          {% if not notif.leida %}
+          {# POST hx-notificaciones:marcar_leida — marca notificación individual como leída #}
+          <form method="post"
+                action="{% url 'notificaciones:marcar_leida' pk=notif.pk %}"
+                hx-post="{% url 'notificaciones:marcar_leida' pk=notif.pk %}"
+                hx-swap="none"
+                hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                hx-on::after-request="document.getElementById('notif-{{ notif.pk }}').classList.remove('bg-purple-50','border-purple-200'); document.getElementById('notif-{{ notif.pk }}').classList.add('bg-white','border-gray-200'); this.closest('form').remove();">
+            {% csrf_token %}
+            <button type="submit"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-white border border-purple-300 rounded-md hover:bg-purple-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-purple-400"
+                    title="Marcar como leída">
+              <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/>
+              </svg>
+              Marcar leída
+            </button>
+          </form>
+          {% endif %}
+
+          {# Enlace al detalle #}
+          <a href="{% url 'notificaciones:notificacion_detail' pk=notif.pk %}"
+             class="text-xs text-gray-400 hover:text-purple-600 transition-colors"
+             title="Ver detalle completo">
+            Ver detalle
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  {% endfor %}
+</div>
+
+{# Paginación #}
+{% include 'components/pagination.html' with page_obj=page_obj %}
+
+{% else %}
+{# Estado vacío #}
+{% include 'components/empty_state.html' with
+    empty_title="Sin notificaciones"
+    empty_message="No tienes notificaciones en este momento. Las recibirás cuando haya actualizaciones en los estudios asignados." %}
+{% endif %}
+
+{% endblock %}
