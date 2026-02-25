@@ -1,0 +1,77 @@
+{# ============================================================
+   PÁGINAS 7-8 — GALERÍA DE FOTOGRAFÍAS DEL DOMICILIO
+   Contexto requerido:
+     - fotos: QuerySet[Documento]  (tipo FOT, excluye foto de candidato)
+     - persona: Persona
+   Nota: la primera foto se usa como foto del candidato en la portada.
+         Aquí se muestran todas las demás (a partir de la segunda).
+============================================================ #}
+
+<div class="pagina-nueva">
+
+  <div class="seccion-titulo">Fotografías del Domicilio</div>
+
+  {# Slicing: mostrar fotos del domicilio (todas las fotos disponibles).
+     La vista debería enviar en 'fotos' solo las fotos tipo FOT del estudio,
+     sin incluir la foto del candidato (que se filtra aparte en la vista).
+     Si la vista envía todo junto, el evaluador debe separar en la vista. #}
+
+  {% if fotos %}
+
+    {# Contador para controlar filas de 2 columnas #}
+    {# WeasyPrint no soporta CSS Grid con template literals, usamos tabla #}
+    <table style="width:100%; border-collapse:separate; border-spacing:8pt;">
+      {% for foto in fotos %}
+        {# Abre fila en posición impar (1, 3, 5...) #}
+        {% if forloop.counter|divisibleby:2 %}
+          {# Posición par: celda derecha #}
+          <td style="width:50%; vertical-align:top; text-align:center; padding:4pt; border:1px solid #ddd; background-color:#FAFAFA;">
+            <img src="{{ foto.archivo.url }}"
+                 alt="{{ foto.nombre_archivo|default:'Fotografía del domicilio' }}"
+                 style="max-width:100%; max-height:9cm; object-fit:cover; display:block; margin:0 auto;">
+            <div style="font-size:7.5pt; color:#888; margin-top:3pt; text-align:center;">
+              {{ foto.get_tipo_display }}
+              {% if foto.nombre_archivo %}— {{ foto.nombre_archivo }}{% endif %}
+              {% if foto.verificado %}
+                <br><span style="color:#2E7D32;">&#10003; Verificada</span>
+              {% endif %}
+            </div>
+          </td>
+          </tr>
+        {% else %}
+          {# Posición impar: celda izquierda, abre fila #}
+          <tr>
+          <td style="width:50%; vertical-align:top; text-align:center; padding:4pt; border:1px solid #ddd; background-color:#FAFAFA;">
+            <img src="{{ foto.archivo.url }}"
+                 alt="{{ foto.nombre_archivo|default:'Fotografía del domicilio' }}"
+                 style="max-width:100%; max-height:9cm; object-fit:cover; display:block; margin:0 auto;">
+            <div style="font-size:7.5pt; color:#888; margin-top:3pt; text-align:center;">
+              {{ foto.get_tipo_display }}
+              {% if foto.nombre_archivo %}— {{ foto.nombre_archivo }}{% endif %}
+              {% if foto.verificado %}
+                <br><span style="color:#2E7D32;">&#10003; Verificada</span>
+              {% endif %}
+            </div>
+          </td>
+          {# Si es el último elemento y es impar, cerrar la fila con celda vacía #}
+          {% if forloop.last %}
+            <td style="width:50%; border:none;"></td>
+            </tr>
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+    </table>
+
+    {# Pie de sección: contador de fotos #}
+    <div style="margin-top:8pt; font-size:7.5pt; color:#888; text-align:right; border-top:1px solid #eee; padding-top:4pt;">
+      Total de fotografías registradas: {{ fotos|length }}
+    </div>
+
+  {% else %}
+    <div class="sin-datos" style="min-height:5cm; display:table-cell; vertical-align:middle; width:100%;">
+      No se registraron fotografías del domicilio para este estudio.<br>
+      <span style="font-size:8pt;">Las fotografías se adjuntan durante la visita domiciliaria.</span>
+    </div>
+  {% endif %}
+
+</div>

@@ -1,0 +1,73 @@
+{# ============================================================
+   ENCABEZADO DE SECCIÓN REUTILIZABLE
+   Uso: {% include "reportes/_pdf_header.html" with titulo="Mi sección" subtitulo="Opcional" %}
+
+   Este parcial se puede incluir al inicio de cada página/sección
+   para mostrar el nombre de la empresa y el folio del candidato
+   de manera compacta (distinto de la portada).
+
+   Contexto requerido (del contexto global):
+     - persona: Persona
+     - empresa: EmpresaCliente|None
+     - estudio: EstudioSocioeconomico
+   Variables opcionales pasadas con {% include ... with %}:
+     - titulo: str   — Título de la sección (p.ej. "Datos Personales")
+     - subtitulo: str — Subtítulo opcional
+============================================================ #}
+
+{# Nota para implementadores:
+   WeasyPrint soporta contenido en @page mediante @top-left, @top-center, @top-right
+   pero esos bloques solo admiten contenido estático (sin template tags Django).
+   Por eso este archivo sirve como encabezado VISUAL dentro del flujo del documento,
+   no como header CSS de página. Se puede incluir dentro de cada sección si se requiere
+   repetir el encabezado de empresa en cada hoja impresa.
+
+   Uso típico (al inicio de un parcial antes del page-break):
+     {% include "reportes/_pdf_header.html" with titulo="Datos Personales" %}
+#}
+
+<div style="
+  display: table;
+  width: 100%;
+  border-bottom: 1.5px solid #9B8EC4;
+  padding-bottom: 4pt;
+  margin-bottom: 8pt;
+">
+  {# Columna izquierda: logo / nombre empresa #}
+  <div style="display:table-cell; vertical-align:middle; width:50%;">
+    {% if empresa %}
+      {% if empresa.logo %}
+        <img src="{{ empresa.logo.url }}"
+             alt="{{ empresa.nombre }}"
+             style="max-height:0.8cm; max-width:3cm; object-fit:contain; vertical-align:middle;">
+      {% else %}
+        <span style="font-size:8pt; font-weight:bold; color:#9B8EC4;">{{ empresa.nombre }}</span>
+      {% endif %}
+    {% else %}
+      <span style="font-size:8pt; font-weight:bold; color:#9B8EC4;">Estudio Socioeconómico</span>
+    {% endif %}
+  </div>
+
+  {# Columna derecha: folio + estado #}
+  <div style="display:table-cell; vertical-align:middle; text-align:right; font-size:7.5pt; color:#888;">
+    <span style="font-weight:bold; color:#555;">Folio: {{ persona.folio }}</span>
+    &nbsp;|&nbsp;
+    {{ estudio.get_estado_display }}
+    {% if titulo %}
+      &nbsp;|&nbsp;
+      <span style="color:#9B8EC4; font-weight:bold;">{{ titulo }}</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if titulo %}
+  <div style="font-size:11pt; font-weight:bold; color:#9B8EC4; margin-bottom:4pt;">
+    {{ titulo }}
+  </div>
+{% endif %}
+
+{% if subtitulo %}
+  <div style="font-size:8.5pt; color:#666; margin-bottom:8pt;">
+    {{ subtitulo }}
+  </div>
+{% endif %}

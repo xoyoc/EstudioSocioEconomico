@@ -101,3 +101,23 @@ class EstudioToken(models.Model):
         if self.fecha_expiracion and timezone.now() > self.fecha_expiracion:
             return False
         return True
+
+    @property
+    def completado(self):
+        """
+        True cuando el candidato finalizó el portal (activo=False por acción del candidato).
+        Se diferencia de expirado porque la fecha_expiracion no ha pasado o no existe.
+        """
+        if self.activo:
+            return False
+        # Si la fecha de expiración aún no ha pasado (o no tiene), fue completado por el candidato
+        if self.fecha_expiracion is None:
+            return True
+        return timezone.now() <= self.fecha_expiracion
+
+    @property
+    def expirado(self):
+        """True cuando el token venció sin que el candidato lo completara."""
+        if not self.activo:
+            return False
+        return bool(self.fecha_expiracion and timezone.now() > self.fecha_expiracion)

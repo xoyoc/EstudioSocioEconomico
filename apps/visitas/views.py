@@ -1,5 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import (
     ListView, DetailView, CreateView, UpdateView, DeleteView,
 )
@@ -20,6 +21,7 @@ class VisitaDomiciliariaDetailView(LoginRequiredMixin, DetailView):
 
 class VisitaDomiciliariaCreateView(LoginRequiredMixin, CreateView):
     model = VisitaDomiciliaria
+    template_name = 'visitas/visitadomiciliaria_reporte_form.html'
     fields = [
         'estudio', 'evaluador', 'fecha_visita',
         'latitud', 'longitud',
@@ -50,6 +52,7 @@ class VisitaDomiciliariaCreateView(LoginRequiredMixin, CreateView):
 
 class VisitaDomiciliariaUpdateView(LoginRequiredMixin, UpdateView):
     model = VisitaDomiciliaria
+    template_name = 'visitas/visitadomiciliaria_reporte_form.html'
     fields = [
         'estudio', 'evaluador', 'fecha_visita',
         'latitud', 'longitud',
@@ -68,3 +71,27 @@ class VisitaDomiciliariaDeleteView(LoginRequiredMixin, DeleteView):
     model = VisitaDomiciliaria
     context_object_name = 'visita'
     success_url = reverse_lazy('visitas:visitadomiciliaria_list')
+
+
+class AgendaInspectorView(LoginRequiredMixin, ListView):
+    """Agenda de visitas asignadas al inspector actual (Fase 4)."""
+    model = VisitaDomiciliaria
+    template_name = 'visitas/agenda.html'
+    context_object_name = 'visitas'
+
+    def get_queryset(self):
+        return (
+            VisitaDomiciliaria.objects
+            .filter(evaluador=self.request.user)
+            .select_related('estudio__persona')
+            .order_by('fecha_visita')
+        )
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        hoy = timezone.now().date()
+        visitas = ctx['visitas']
+        ctx['visitas_hoy'] = [v for v in visitas if v.fecha_visita.date() == hoy]
+        ctx['visitas_proximas'] = [v for v in visitas if v.fecha_visita.date() > hoy]
+        ctx['visitas_pasadas'] = [v for v in visitas if v.fecha_visita.date() < hoy]
+        return ctx

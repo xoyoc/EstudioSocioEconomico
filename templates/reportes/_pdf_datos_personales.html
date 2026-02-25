@@ -1,0 +1,258 @@
+{# ============================================================
+   PÁGINA 2 — DATOS PERSONALES + IDENTIFICACIONES + ESCOLARIDAD
+   Contexto requerido:
+     - persona: Persona
+     - educacion: QuerySet[Educacion]
+     - idiomas: QuerySet[Idioma]
+============================================================ #}
+
+<div class="pagina-nueva">
+
+  <div class="seccion-titulo">Datos Personales</div>
+
+  {# --- INFORMACIÓN PRINCIPAL: tabla de 2 columnas --- #}
+  <div class="grid-2col">
+
+    {# Columna izquierda: datos generales #}
+    <div class="col-izq">
+      <table class="tabla-datos">
+        <tbody>
+          <tr>
+            <th>Nombre completo</th>
+            <td>{{ persona.nombre_completo|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>Fecha de nacimiento</th>
+            <td>{{ persona.fecha_nacimiento|date:"d/m/Y"|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>Lugar de nacimiento</th>
+            <td>{{ persona.lugar_nacimiento|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>Estado civil</th>
+            <td>{{ persona.get_estado_civil_display|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>CURP</th>
+            <td style="font-family: 'Courier New', monospace; font-size:8pt; letter-spacing:1pt;">
+              {{ persona.curp|default:"N/A" }}
+            </td>
+          </tr>
+          <tr>
+            <th>RFC</th>
+            <td style="font-family: 'Courier New', monospace; font-size:8pt; letter-spacing:1pt;">
+              {{ persona.rfc|default:"N/A" }}
+            </td>
+          </tr>
+          <tr>
+            <th>NSS</th>
+            <td>{{ persona.nss|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>Perfil de Facebook</th>
+            <td>{{ persona.facebook_perfil|default:"N/A" }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    {# Columna derecha: contacto y datos físicos #}
+    <div class="col-der">
+      <table class="tabla-datos">
+        <tbody>
+          <tr>
+            <th>Correo electrónico</th>
+            <td>{{ persona.email|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>Teléfono móvil</th>
+            <td>{{ persona.telefono_movil|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>Teléfono fijo</th>
+            <td>{{ persona.telefono_fijo|default:"N/A" }}</td>
+          </tr>
+          <tr>
+            <th>No. de dependientes</th>
+            <td>{{ persona.numero_dependientes|default:"0" }}</td>
+          </tr>
+          <tr>
+            <th>Peso</th>
+            <td>
+              {% if persona.peso %}{{ persona.peso|floatformat:1 }} kg{% else %}N/A{% endif %}
+            </td>
+          </tr>
+          <tr>
+            <th>Estatura</th>
+            <td>
+              {% if persona.estatura %}{{ persona.estatura|floatformat:1 }} cm{% else %}N/A{% endif %}
+            </td>
+          </tr>
+          {% if estudio.expectativas_salariales %}
+            <tr>
+              <th>Expectativas salariales</th>
+              <td>{{ estudio.expectativas_salariales }}</td>
+            </tr>
+          {% endif %}
+          {% if estudio.medio_enterado_vacante %}
+            <tr>
+              <th>Medio por el que se enteró</th>
+              <td>{{ estudio.get_medio_enterado_vacante_display }}</td>
+            </tr>
+          {% endif %}
+          {% if estudio.tiempo_traslado %}
+            <tr>
+              <th>Tiempo de traslado</th>
+              <td>{{ estudio.tiempo_traslado }}</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  {# --- DOCUMENTOS DE IDENTIFICACIÓN --- #}
+  <div class="subseccion-titulo">Documentos de Identificación</div>
+  <table class="tabla-datos">
+    <tbody>
+      <tr>
+        <th style="width:32%;">Tipo de identificación</th>
+        <td style="width:18%;">{{ persona.get_tipo_identificacion_display|default:"N/A" }}</td>
+        <th style="width:25%;">Número de identificación</th>
+        <td>{{ persona.numero_identificacion|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <th>Licencia de manejo (folio)</th>
+        <td>{{ persona.licencia_manejo_folio|default:"N/A" }}</td>
+        <th>Cartilla militar (folio)</th>
+        <td>{{ persona.cartilla_militar_folio|default:"N/A" }}</td>
+      </tr>
+      <tr>
+        <th>No. acta de nacimiento</th>
+        <td colspan="3">{{ persona.acta_nacimiento_numero|default:"N/A" }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  {# --- HISTORIAL DE RESIDENCIAS (si existe) --- #}
+  {% if persona.historial_residencias %}
+    <div class="subseccion-titulo">Historial de Residencias Anteriores</div>
+    <div class="bloque-texto">{{ persona.historial_residencias }}</div>
+  {% endif %}
+
+  {# --- PERÍODOS SIN LABORAR (si existe) --- #}
+  {% if persona.periodos_sin_laborar %}
+    <div class="subseccion-titulo">Períodos sin Laborar</div>
+    <div class="bloque-texto">{{ persona.periodos_sin_laborar }}</div>
+  {% endif %}
+
+  {# --- ACTIVIDADES EN TIEMPO LIBRE (si existe) --- #}
+  {% if persona.actividades_tiempo_libre %}
+    <div class="subseccion-titulo">Actividades en Tiempo Libre</div>
+    <div class="bloque-texto">{{ persona.actividades_tiempo_libre }}</div>
+  {% endif %}
+
+  {# --- COMENTARIOS ADICIONALES DEL SOLICITANTE --- #}
+  {% if estudio.comentarios_adicionales %}
+    <div class="subseccion-titulo">Comentarios Adicionales del Solicitante</div>
+    <div class="bloque-texto">{{ estudio.comentarios_adicionales }}</div>
+  {% endif %}
+
+  {# --- ESCOLARIDAD --- #}
+  <div class="subseccion-titulo">Escolaridad</div>
+  {% if educacion %}
+    <table>
+      <thead>
+        <tr>
+          <th>Nivel</th>
+          <th>Institución / Ciudad</th>
+          <th>Título / Carrera</th>
+          <th>Período</th>
+          <th>Estado</th>
+          <th>Documento</th>
+          <th style="text-align:center;">Verificado</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for edu in educacion %}
+          <tr>
+            <td>{{ edu.nivel.nivel|default:"N/A" }}</td>
+            <td>
+              {{ edu.institucion|default:"N/A" }}
+              {% if edu.ciudad_institucion %}
+                <br><span style="color:#888; font-size:7.5pt;">{{ edu.ciudad_institucion }}</span>
+              {% endif %}
+            </td>
+            <td>{{ edu.titulo|default:"N/A" }}</td>
+            <td style="white-space:nowrap;">
+              {{ edu.anio_inicio }}
+              {% if edu.anio_fin %}– {{ edu.anio_fin }}{% else %}– Actual{% endif %}
+            </td>
+            <td>{{ edu.get_estado_display|default:"N/A" }}</td>
+            <td>
+              {{ edu.get_tipo_documento_estudio_display|default:"N/A" }}
+              {% if edu.tiene_cedula and edu.numero_cedula %}
+                <br><span style="font-size:7.5pt; color:#666;">Cédula: {{ edu.numero_cedula }}</span>
+              {% endif %}
+            </td>
+            <td style="text-align:center;">
+              {% if edu.documento_verificado %}
+                <span class="check-si">&#10003;</span>
+              {% else %}
+                <span class="check-no">&#10007;</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="sin-datos">No se registraron datos de escolaridad</div>
+  {% endif %}
+
+  {# --- IDIOMAS --- #}
+  {% if idiomas %}
+    <div class="subseccion-titulo">Idiomas</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Idioma</th>
+          <th style="text-align:center;">Habla %</th>
+          <th style="text-align:center;">Escribe %</th>
+          <th style="text-align:center;">Lee %</th>
+          <th>Plantel</th>
+          <th>Período</th>
+          <th>Certificación</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for idioma in idiomas %}
+          <tr>
+            <td>{{ idioma.idioma|default:"N/A" }}</td>
+            <td style="text-align:center;">{{ idioma.porcentaje_habla }}%</td>
+            <td style="text-align:center;">{{ idioma.porcentaje_escribe }}%</td>
+            <td style="text-align:center;">{{ idioma.porcentaje_lee }}%</td>
+            <td>{{ idioma.plantel|default:"N/A" }}</td>
+            <td style="white-space:nowrap;">
+              {% if idioma.periodo_inicio %}{{ idioma.periodo_inicio }}{% endif %}
+              {% if idioma.periodo_fin %} – {{ idioma.periodo_fin }}{% endif %}
+            </td>
+            <td>
+              {% if idioma.tiene_certificacion %}
+                {{ idioma.tipo_certificacion|default:"Sí" }}
+                {% if idioma.nivel_certificacion %}
+                  — {{ idioma.nivel_certificacion }}
+                {% endif %}
+              {% else %}
+                No
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+</div>

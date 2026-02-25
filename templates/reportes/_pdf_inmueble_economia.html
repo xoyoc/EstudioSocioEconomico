@@ -1,0 +1,488 @@
+{# ============================================================
+   PÁGINA 4 — DATOS DEL INMUEBLE + SITUACIÓN ECONÓMICA
+   Contexto requerido:
+     - domicilio_actual: Domicilio|None  (tipo ACT)
+     - economia: SituacionEconomica|None
+============================================================ #}
+
+<div class="pagina-nueva">
+
+  {# ============================================================
+     SECCIÓN: DATOS DEL INMUEBLE
+  ============================================================ #}
+  <div class="seccion-titulo">Datos del Inmueble</div>
+
+  {% if domicilio_actual %}
+
+    {# Dirección completa #}
+    <div style="margin-bottom:8pt; padding:5pt 8pt; background-color:#F8F7FC; border-left:3px solid #9B8EC4; font-size:9pt;">
+      <strong>{{ domicilio_actual.calle }} #{{ domicilio_actual.numero_exterior }}
+        {% if domicilio_actual.numero_interior %} Int. {{ domicilio_actual.numero_interior }}{% endif %}</strong>
+      {% if domicilio_actual.entre_calles %}
+        &nbsp;—&nbsp; Entre: {{ domicilio_actual.entre_calles }}
+      {% endif %}
+      <br>
+      Col. {{ domicilio_actual.colonia }}, C.P. {{ domicilio_actual.codigo_postal }},
+      {{ domicilio_actual.municipio }}, {{ domicilio_actual.estado }}, {{ domicilio_actual.pais }}
+    </div>
+
+    {# Características generales del inmueble #}
+    <div class="grid-2col">
+      <div class="col-izq">
+        <table class="tabla-datos">
+          <tbody>
+            <tr>
+              <th>Tipo de inmueble</th>
+              <td>{{ domicilio_actual.get_tipo_inmueble_display|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>Tenencia</th>
+              <td>{{ domicilio_actual.get_tipo_vivienda_display|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>Propietario / A nombre de</th>
+              <td>{{ domicilio_actual.propietario_nombre|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>Superficie aproximada</th>
+              <td>
+                {% if domicilio_actual.superficie_m2 %}
+                  {{ domicilio_actual.superficie_m2|floatformat:0 }} m²
+                {% else %}N/A{% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>No. de habitaciones</th>
+              <td>{{ domicilio_actual.numero_habitaciones|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>No. de niveles</th>
+              <td>{{ domicilio_actual.numero_niveles|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>Material de construcción</th>
+              <td>{{ domicilio_actual.material_construccion|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>Tiempo de residencia</th>
+              <td>
+                {% if domicilio_actual.tiempo_residencia_anios is not None %}
+                  {{ domicilio_actual.tiempo_residencia_anios }} año{% if domicilio_actual.tiempo_residencia_anios != 1 %}s{% endif %}
+                  {% if domicilio_actual.tiempo_residencia_meses %}
+                    {{ domicilio_actual.tiempo_residencia_meses }} mes{% if domicilio_actual.tiempo_residencia_meses != 1 %}es{% endif %}
+                  {% endif %}
+                {% else %}N/A{% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>Orden y limpieza</th>
+              <td>
+                {% if domicilio_actual.orden_limpieza == 'BUE' %}
+                  <span style="color:#2E7D32; font-weight:bold;">Bueno</span>
+                {% elif domicilio_actual.orden_limpieza == 'REG' %}
+                  <span style="color:#F57F17; font-weight:bold;">Regular</span>
+                {% elif domicilio_actual.orden_limpieza == 'MAL' %}
+                  <span style="color:#C62828; font-weight:bold;">Malo</span>
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col-der">
+        {# Valor estimado #}
+        <table class="tabla-datos" style="margin-bottom:6pt;">
+          <tbody>
+            <tr>
+              <th>Valor del inmueble</th>
+              <td>
+                {% if domicilio_actual.valor_inmueble %}
+                  ${{ domicilio_actual.valor_inmueble|floatformat:0 }}
+                {% else %}N/A{% endif %}
+              </td>
+            </tr>
+            <tr>
+              <th>Valor de muebles</th>
+              <td>{{ domicilio_actual.get_valor_muebles_display|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>Valor de electrodomésticos</th>
+              <td>{{ domicilio_actual.get_valor_electrodomesticos_display|default:"N/A" }}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        {# Servicios #}
+        <div class="subseccion-titulo" style="margin-top:6pt;">Servicios</div>
+        <table style="font-size:8pt;">
+          <tbody>
+            <tr>
+              <td style="border:none; padding:2pt 6pt 2pt 0;">
+                {% if domicilio_actual.tiene_agua %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Agua
+              </td>
+              <td style="border:none; padding:2pt 6pt;">
+                {% if domicilio_actual.tiene_luz %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Luz
+              </td>
+              <td style="border:none; padding:2pt 0;">
+                {% if domicilio_actual.tiene_drenaje %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Drenaje
+              </td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2pt 6pt 2pt 0;">
+                {% if domicilio_actual.tiene_gas %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Gas
+              </td>
+              <td style="border:none; padding:2pt 6pt;">
+                {% if domicilio_actual.tiene_internet %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Internet
+              </td>
+              <td style="border:none; padding:2pt 0;">
+                {% if domicilio_actual.tiene_tv_cable %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} TV cable
+              </td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2pt 6pt 2pt 0;">
+                {% if domicilio_actual.tiene_pavimentacion %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Pavimentación
+              </td>
+              <td style="border:none; padding:2pt 6pt;" colspan="2">
+                {% if domicilio_actual.tiene_telefono_domicilio %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Teléfono fijo
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# Materiales de construcción y espacios #}
+    <div class="grid-2col" style="margin-top:6pt;">
+      <div class="col-izq">
+        <div class="subseccion-titulo">Materiales de Construcción</div>
+        <table style="font-size:8pt;">
+          <tbody>
+            <tr>
+              <td style="border:none; padding:2pt 10pt 2pt 0;">
+                {% if domicilio_actual.tiene_piso %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Piso (mosaico/madera/porcelanato)
+              </td>
+              <td style="border:none; padding:2pt 0;">
+                {% if domicilio_actual.tiene_piso_cemento %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Piso de cemento
+              </td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2pt 10pt 2pt 0;">
+                {% if domicilio_actual.tiene_enjarre %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Enjarre en paredes
+              </td>
+              <td style="border:none; padding:2pt 0;">
+                {% if domicilio_actual.tiene_paredes_sin_enjarre %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Paredes sin enjarre
+              </td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2pt 10pt 2pt 0;">
+                {% if domicilio_actual.tiene_loza %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Loza
+              </td>
+              <td style="border:none; padding:2pt 0;">
+                {% if domicilio_actual.tiene_techo_lamina %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Techo de lámina
+              </td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2pt 10pt 2pt 0;" colspan="2">
+                {% if domicilio_actual.tiene_puertas %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Puertas
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col-der">
+        <div class="subseccion-titulo">Espacios</div>
+        <table style="font-size:8pt;">
+          <tbody>
+            <tr>
+              <td style="border:none; padding:2pt 10pt 2pt 0;">
+                {% if domicilio_actual.tiene_sala %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Sala
+              </td>
+              <td style="border:none; padding:2pt 0;">
+                {% if domicilio_actual.tiene_cocina %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Cocina
+              </td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2pt 10pt 2pt 0;">
+                {% if domicilio_actual.tiene_comedor %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Comedor
+              </td>
+              <td style="border:none; padding:2pt 0;">
+                {% if domicilio_actual.tiene_patio_servicio %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Patio de servicio
+              </td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2pt 0;" colspan="2">
+                {% if domicilio_actual.tiene_cochera %}<span class="check-si">&#10003;</span>{% else %}<span class="check-no">&#10007;</span>{% endif %} Cochera
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# Observaciones del inmueble #}
+    {% if domicilio_actual.observaciones_inmueble %}
+      <div class="subseccion-titulo" style="margin-top:6pt;">Observaciones del Inmueble</div>
+      <div class="bloque-texto">{{ domicilio_actual.observaciones_inmueble }}</div>
+    {% endif %}
+
+  {% else %}
+    <div class="sin-datos">No se registró domicilio actual para este candidato</div>
+  {% endif %}
+
+  {# ============================================================
+     SECCIÓN: SITUACIÓN ECONÓMICA
+  ============================================================ #}
+  <div class="seccion-titulo" style="margin-top:14pt;">Situación Económica</div>
+
+  {% if economia %}
+
+    {# Situación percibida #}
+    {% if economia.situacion_economica_percibida %}
+      <div style="margin-bottom:8pt; padding:5pt 8pt; background-color:#F8F7FC; border-left:3px solid #9B8EC4; font-size:8.5pt;">
+        <strong>Situación autopercibida:</strong> {{ economia.get_situacion_economica_percibida_display }}
+      </div>
+    {% endif %}
+
+    {# Ingresos y egresos en 2 columnas #}
+    <div class="grid-2col">
+
+      {# Tabla de INGRESOS #}
+      <div class="col-izq">
+        <div class="subseccion-titulo">Ingresos Mensuales</div>
+        <table class="tabla-finanzas">
+          <tbody>
+            <tr>
+              <td>Salario mensual neto</td>
+              <td class="monto">${{ economia.salario_mensual|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Bonos / comisiones</td>
+              <td class="monto">${{ economia.bonos_comisiones|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Ingresos extra</td>
+              <td class="monto">${{ economia.ingresos_extra|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Apoyo familiar</td>
+              <td class="monto">${{ economia.apoyo_familiar|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>
+                Otros ingresos
+                {% if economia.descripcion_otros_ingresos %}
+                  <br><span style="font-size:7.5pt; color:#888;">({{ economia.descripcion_otros_ingresos }})</span>
+                {% endif %}
+              </td>
+              <td class="monto">${{ economia.otros_ingresos|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>TOTAL INGRESOS</strong></td>
+              <td class="monto"><strong>${{ economia.ingreso_total_mensual|floatformat:2 }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      {# Tabla de EGRESOS #}
+      <div class="col-der">
+        <div class="subseccion-titulo">Egresos Mensuales</div>
+        <table class="tabla-finanzas">
+          <tbody>
+            <tr>
+              <td>Alimentación</td>
+              <td class="monto">${{ economia.gasto_alimentacion|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Vivienda (renta/hipoteca)</td>
+              <td class="monto">${{ economia.gasto_vivienda|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Servicios (agua, luz, gas)</td>
+              <td class="monto">${{ economia.gasto_servicios|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Transporte</td>
+              <td class="monto">${{ economia.gasto_transporte|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Educación</td>
+              <td class="monto">${{ economia.gasto_educacion|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Salud / medicamentos</td>
+              <td class="monto">${{ economia.gasto_salud|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>Pago de deudas</td>
+              <td class="monto">${{ economia.gasto_deudas|floatformat:2 }}</td>
+            </tr>
+            <tr>
+              <td>
+                Otros gastos
+                {% if economia.descripcion_otros_gastos %}
+                  <br><span style="font-size:7.5pt; color:#888;">({{ economia.descripcion_otros_gastos }})</span>
+                {% endif %}
+              </td>
+              <td class="monto">${{ economia.otros_gastos|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-row">
+              <td><strong>TOTAL EGRESOS</strong></td>
+              <td class="monto"><strong>${{ economia.egreso_total_mensual|floatformat:2 }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+
+    {# Capacidad de ahorro #}
+    <table class="tabla-finanzas" style="margin-top:4pt;">
+      <tbody>
+        <tr class="{% if economia.capacidad_ahorro >= 0 %}ahorro-positivo{% else %}ahorro-negativo{% endif %}">
+          <td style="width:80%;"><strong>CAPACIDAD DE AHORRO MENSUAL</strong></td>
+          <td class="monto"><strong>${{ economia.capacidad_ahorro|floatformat:2 }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    {# Patrimonio y bienes #}
+    <div class="subseccion-titulo" style="margin-top:10pt;">Patrimonio</div>
+    <div class="grid-2col">
+      <div class="col-izq">
+        <table class="tabla-datos">
+          <tbody>
+            <tr>
+              <th>Patrimonio inmobiliario</th>
+              <td>{{ economia.get_patrimonio_inmobiliario_display|default:"N/A" }}</td>
+            </tr>
+            {% if economia.descripcion_patrimonio %}
+              <tr>
+                <th>Descripción</th>
+                <td>{{ economia.descripcion_patrimonio }}</td>
+              </tr>
+            {% endif %}
+            <tr>
+              <th>Institución bancaria (débito)</th>
+              <td>{{ economia.institucion_bancaria|default:"N/A" }}</td>
+            </tr>
+            <tr>
+              <th>AFORE</th>
+              <td>{{ economia.afore|default:"N/A" }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="col-der">
+        {# Automóvil #}
+        {% if economia.tiene_automovil %}
+          <table class="tabla-datos">
+            <tbody>
+              <tr>
+                <th colspan="2" style="background-color:#EDE9F8; color:#7B6FA8;">Automóvil</th>
+              </tr>
+              <tr>
+                <th>Marca / modelo</th>
+                <td>{{ economia.automovil_marca_modelo|default:"N/A" }}</td>
+              </tr>
+              <tr>
+                <th>Año</th>
+                <td>{{ economia.automovil_anio|default:"N/A" }}</td>
+              </tr>
+              <tr>
+                <th>Valor comercial</th>
+                <td>
+                  {% if economia.automovil_valor_comercial %}
+                    ${{ economia.automovil_valor_comercial|floatformat:0 }}
+                  {% else %}N/A{% endif %}
+                </td>
+              </tr>
+              <tr>
+                <th>Con adeudo</th>
+                <td>{% if economia.automovil_con_adeudo %}Sí{% else %}No{% endif %}</td>
+              </tr>
+            </tbody>
+          </table>
+        {% else %}
+          <div style="padding:6pt; font-size:8.5pt; color:#888; border:1px dashed #ddd; text-align:center;">
+            Sin automóvil propio
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Créditos vigentes #}
+    {% if economia.tiene_creditos %}
+      <div class="subseccion-titulo" style="margin-top:8pt;">Créditos Vigentes</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Tipo de crédito</th>
+            <th style="text-align:right;">Monto / Saldo</th>
+            <th>Detalle</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if economia.credito_hipotecario %}
+            <tr>
+              <td>Crédito hipotecario</td>
+              <td style="text-align:right;">${{ economia.credito_hipotecario|floatformat:2 }}</td>
+              <td>—</td>
+            </tr>
+          {% endif %}
+          {% if economia.credito_automotriz %}
+            <tr>
+              <td>Crédito automotriz</td>
+              <td style="text-align:right;">${{ economia.credito_automotriz|floatformat:2 }}</td>
+              <td>—</td>
+            </tr>
+          {% endif %}
+          {% if economia.tarjetas_credito %}
+            <tr>
+              <td>Tarjetas de crédito</td>
+              <td style="text-align:right;">${{ economia.tarjetas_credito|floatformat:2 }}</td>
+              <td>{{ economia.tarjeta_credito_banco|default:"—" }}</td>
+            </tr>
+          {% endif %}
+          {% if economia.tienda_departamental_nombre %}
+            <tr>
+              <td>Tienda departamental</td>
+              <td style="text-align:right;">
+                {% if economia.tienda_departamental_adeudo %}
+                  ${{ economia.tienda_departamental_adeudo|floatformat:2 }}
+                {% else %}N/D{% endif %}
+              </td>
+              <td>{{ economia.tienda_departamental_nombre }}</td>
+            </tr>
+          {% endif %}
+          {% if economia.prestamos_personales %}
+            <tr>
+              <td>Préstamos personales</td>
+              <td style="text-align:right;">${{ economia.prestamos_personales|floatformat:2 }}</td>
+              <td>—</td>
+            </tr>
+          {% endif %}
+          {% if economia.otros_creditos %}
+            <tr>
+              <td>
+                Otros créditos
+                {% if economia.descripcion_otros_creditos %}({{ economia.descripcion_otros_creditos }}){% endif %}
+              </td>
+              <td style="text-align:right;">${{ economia.otros_creditos|floatformat:2 }}</td>
+              <td>—</td>
+            </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    {% endif %}
+
+  {% else %}
+    <div class="sin-datos">No se registró información económica para este estudio</div>
+  {% endif %}
+
+</div>

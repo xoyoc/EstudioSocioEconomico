@@ -141,6 +141,7 @@ ENV/
 env.bak/
 venv.bak/
 .venvEstudioEcoNom
+.venvEstudioEcoNom
 
 # Spyder project settings
 .spyderproject

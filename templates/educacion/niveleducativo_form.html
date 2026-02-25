@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Editar nivel educativo{% else %}Nuevo nivel educativo{% endif %}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="bg-white border-b border-gray-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 text-xs text-gray-500 flex items-center gap-1.5">
+    <a href="{% url 'home' %}" class="hover:text-purple-600">Inicio</a>
+    <span>/</span>
+    <a href="{% url 'educacion:niveleducativo_list' %}" class="hover:text-purple-600">Niveles educativos</a>
+    <span>/</span>
+    <span class="text-gray-800 font-medium">{% if object %}Editar{% else %}Nuevo{% endif %}</span>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-md">
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">
+      {% if object %}Editar nivel educativo{% else %}Nuevo nivel educativo{% endif %}
+    </h1>
+    <p class="text-sm text-gray-500 mt-0.5">Catálogo de niveles de formación académica</p>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <!-- Campo: nivel -->
+      <div class="mb-5">
+        <label for="{{ form.nivel.id_for_label }}"
+               class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.nivel.label }}
+          <span class="text-red-500 ml-0.5">*</span>
+        </label>
+        {{ form.nivel }}
+        {% if form.nivel.errors %}
+        <ul class="mt-1 space-y-0.5">
+          {% for error in form.nivel.errors %}
+          <li class="text-xs text-red-600">{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <!-- Campo: orden -->
+      <div class="mb-5">
+        <label for="{{ form.orden.id_for_label }}"
+               class="block text-sm font-medium text-gray-700 mb-1.5">
+          {{ form.orden.label }}
+          <span class="text-red-500 ml-0.5">*</span>
+        </label>
+        <p class="text-xs text-gray-400 mb-1.5">Determina el orden de aparición en formularios y listados.</p>
+        {{ form.orden }}
+        {% if form.orden.errors %}
+        <ul class="mt-1 space-y-0.5">
+          {% for error in form.orden.errors %}
+          <li class="text-xs text-red-600">{{ error }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <!-- Errores no de campo -->
+      {% if form.non_field_errors %}
+      <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+        {% for error in form.non_field_errors %}
+        <p class="text-sm text-red-600">{{ error }}</p>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- Botones -->
+      <div class="flex gap-3 pt-2">
+        <button type="submit"
+                class="flex-1 sm:flex-none px-5 py-2 text-sm font-medium text-white rounded-md transition-colors"
+                style="background-color: var(--meraki-purple);"
+                onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+                onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+          {% if object %}Guardar cambios{% else %}Crear nivel{% endif %}
+        </button>
+        <a href="{% if object %}{% url 'educacion:niveleducativo_detail' pk=object.pk %}{% else %}{% url 'educacion:niveleducativo_list' %}{% endif %}"
+           class="px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors">
+          Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  /* Aplica estilos de Tailwind a los inputs generados por Django */
+  document.addEventListener('DOMContentLoaded', function () {
+    const inputClasses = 'block w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500 bg-white';
+    document.querySelectorAll('input[type="text"], input[type="number"]').forEach(function (el) {
+      el.className = inputClasses;
+    });
+  });
+</script>
+{% endblock %}
+{% endblock %}

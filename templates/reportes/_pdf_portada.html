@@ -1,0 +1,227 @@
+{# ============================================================
+   PÁGINA 1 — PORTADA
+   Contexto requerido:
+     - empresa: EmpresaCliente|None
+     - persona: Persona
+     - estudio: EstudioSocioeconomico
+     - evaluacion: EvaluacionRiesgo|None
+     - fecha_generacion: datetime
+     - fotos: QuerySet[Documento] (tipo FOT)
+============================================================ #}
+
+<div class="portada">
+
+  {# --- ENCABEZADO: logo empresa + folio/estado --- #}
+  <div class="portada-header">
+    <div class="logo-empresa">
+      {% if empresa %}
+        {% if empresa.logo %}
+          <img src="{{ empresa.logo.url }}" alt="{{ empresa.nombre }}">
+        {% else %}
+          <span class="empresa-nombre-texto">{{ empresa.nombre }}</span>
+        {% endif %}
+      {% else %}
+        <span class="empresa-nombre-texto" style="color:#9B8EC4;">Estudio Socioeconómico</span>
+      {% endif %}
+    </div>
+    <div class="folio-info">
+      <div class="portada-folio">Folio: {{ persona.folio }}</div>
+      <div class="portada-fecha">
+        Generado: {{ fecha_generacion|date:"d/m/Y H:i" }}
+      </div>
+      <div style="margin-top:4pt;">
+        {# Badge de estado del estudio #}
+        {% if estudio.estado == 'APR' %}
+          <span class="badge badge-estado-aprobado">{{ estudio.get_estado_display }}</span>
+        {% elif estudio.estado == 'REC' %}
+          <span class="badge badge-estado-rechazado">{{ estudio.get_estado_display }}</span>
+        {% elif estudio.estado == 'REV' %}
+          <span class="badge badge-estado-revision">{{ estudio.get_estado_display }}</span>
+        {% elif estudio.estado == 'COM' %}
+          <span class="badge badge-estado-completado">{{ estudio.get_estado_display }}</span>
+        {% elif estudio.estado == 'PRO' %}
+          <span class="badge badge-estado-proceso">{{ estudio.get_estado_display }}</span>
+        {% else %}
+          <span class="badge badge-estado-borrador">{{ estudio.get_estado_display }}</span>
+        {% endif %}
+      </div>
+      {% if empresa %}
+        <div style="margin-top:4pt; font-size:7.5pt; color:#888;">
+          {{ empresa.nombre }}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# --- CUERPO: nombre candidato + foto + tipo de estudio --- #}
+  <div class="portada-cuerpo">
+    <div class="col-candidato">
+      <div class="portada-nombre-candidato">{{ persona.nombre_completo }}</div>
+      <div class="portada-tipo-estudio">
+        {{ estudio.tipo_estudio.nombre }}
+        {% if estudio.fecha_realizacion %}
+          &nbsp;|&nbsp; Realizado: {{ estudio.fecha_realizacion|date:"d/m/Y" }}
+        {% endif %}
+      </div>
+
+      {# --- SCORE Y NIVEL DE RIESGO --- #}
+      {% if evaluacion or estudio.puntuacion_total %}
+        <div style="display:table; margin-bottom:10pt;">
+          <div style="display:table-cell; vertical-align:top; padding-right:12pt;">
+            <div class="caja-score">
+              <span class="puntuacion-grande">
+                {% if evaluacion %}{{ evaluacion.score_final|floatformat:0 }}{% else %}{{ estudio.puntuacion_total|floatformat:0 }}{% endif %}
+              </span>
+              <span class="puntuacion-label">Score total</span>
+            </div>
+          </div>
+          {% if evaluacion %}
+            <div style="display:table-cell; vertical-align:middle;">
+              <div style="margin-bottom:3pt; font-size:8pt; color:#666;">Nivel de riesgo:</div>
+              {% if evaluacion.nivel_riesgo == 'BAJ' %}
+                <span class="badge badge-riesgo-bajo">{{ evaluacion.get_nivel_riesgo_display }}</span>
+              {% elif evaluacion.nivel_riesgo == 'MED' %}
+                <span class="badge badge-riesgo-medio">{{ evaluacion.get_nivel_riesgo_display }}</span>
+              {% elif evaluacion.nivel_riesgo == 'ALT' %}
+                <span class="badge badge-riesgo-alto">{{ evaluacion.get_nivel_riesgo_display }}</span>
+              {% elif evaluacion.nivel_riesgo == 'CRI' %}
+                <span class="badge badge-riesgo-critico">{{ evaluacion.get_nivel_riesgo_display }}</span>
+              {% endif %}
+
+              {# Barras de puntuación por categoría #}
+              <div style="margin-top:8pt;">
+                <div class="barra-contenedor">
+                  <span class="barra-etiqueta">Identificación</span>
+                  <span class="barra-track">
+                    <div class="barra-fondo"><div class="barra-relleno" style="width:{{ evaluacion.puntuacion_identificacion }}%;"></div></div>
+                  </span>
+                  <span class="barra-valor">{{ evaluacion.puntuacion_identificacion|floatformat:0 }}</span>
+                </div>
+                <div class="barra-contenedor">
+                  <span class="barra-etiqueta">Domicilio</span>
+                  <span class="barra-track">
+                    <div class="barra-fondo"><div class="barra-relleno" style="width:{{ evaluacion.puntuacion_domicilio }}%;"></div></div>
+                  </span>
+                  <span class="barra-valor">{{ evaluacion.puntuacion_domicilio|floatformat:0 }}</span>
+                </div>
+                <div class="barra-contenedor">
+                  <span class="barra-etiqueta">Laboral</span>
+                  <span class="barra-track">
+                    <div class="barra-fondo"><div class="barra-relleno" style="width:{{ evaluacion.puntuacion_laboral }}%;"></div></div>
+                  </span>
+                  <span class="barra-valor">{{ evaluacion.puntuacion_laboral|floatformat:0 }}</span>
+                </div>
+                <div class="barra-contenedor">
+                  <span class="barra-etiqueta">Económica</span>
+                  <span class="barra-track">
+                    <div class="barra-fondo"><div class="barra-relleno" style="width:{{ evaluacion.puntuacion_economica }}%;"></div></div>
+                  </span>
+                  <span class="barra-valor">{{ evaluacion.puntuacion_economica|floatformat:0 }}</span>
+                </div>
+                <div class="barra-contenedor">
+                  <span class="barra-etiqueta">Crediticia</span>
+                  <span class="barra-track">
+                    <div class="barra-fondo"><div class="barra-relleno" style="width:{{ evaluacion.puntuacion_crediticia }}%;"></div></div>
+                  </span>
+                  <span class="barra-valor">{{ evaluacion.puntuacion_crediticia|floatformat:0 }}</span>
+                </div>
+                <div class="barra-contenedor">
+                  <span class="barra-etiqueta">Referencias</span>
+                  <span class="barra-track">
+                    <div class="barra-fondo"><div class="barra-relleno" style="width:{{ evaluacion.puntuacion_referencias }}%;"></div></div>
+                  </span>
+                  <span class="barra-valor">{{ evaluacion.puntuacion_referencias|floatformat:0 }}</span>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+      {% endif %}
+
+    </div>
+
+    {# --- FOTO DEL CANDIDATO --- #}
+    <div class="col-foto">
+      {% with foto_candidato=fotos|first %}
+        {% if foto_candidato %}
+          <img src="{{ foto_candidato.archivo.url }}"
+               alt="Foto de {{ persona.nombre_completo }}"
+               class="portada-foto-candidato">
+        {% else %}
+          <div style="width:5cm; height:6cm; border:2px dashed #ddd; text-align:center; padding-top:40%; font-size:8pt; color:#999;">
+            Sin fotografía
+          </div>
+        {% endif %}
+      {% endwith %}
+      <div style="font-size:7.5pt; color:#888; margin-top:4pt; text-align:center;">
+        {{ persona.get_tipo_identificacion_display|default:"" }}
+        {% if persona.numero_identificacion %}
+          <br>{{ persona.numero_identificacion }}
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# --- CAJA DE COMENTARIOS Y CONCLUSIONES --- #}
+  <div class="caja-conclusiones evitar-corte" style="margin-top:12pt;">
+    <div class="caja-conclusiones-titulo">Comentarios y Conclusiones del Evaluador</div>
+    <div class="caja-conclusiones-cuerpo">
+
+      {# Aspectos positivos #}
+      <div class="caja-conclusion-item">
+        <div class="caja-conclusion-label">Aspectos positivos</div>
+        <div class="caja-conclusion-texto">
+          {% if estudio.aspectos_positivos %}{{ estudio.aspectos_positivos }}{% else %}<em style="color:#999;">No registrado</em>{% endif %}
+        </div>
+      </div>
+
+      {# Aspectos negativos #}
+      <div class="caja-conclusion-item">
+        <div class="caja-conclusion-label">Aspectos negativos / Áreas de oportunidad</div>
+        <div class="caja-conclusion-texto">
+          {% if estudio.aspectos_negativos %}{{ estudio.aspectos_negativos }}{% else %}<em style="color:#999;">No registrado</em>{% endif %}
+        </div>
+      </div>
+
+      {# Conclusión general #}
+      <div class="caja-conclusion-item">
+        <div class="caja-conclusion-label">Conclusión general</div>
+        <div class="caja-conclusion-texto">
+          {% if estudio.conclusion %}{{ estudio.conclusion }}{% else %}<em style="color:#999;">No registrada</em>{% endif %}
+        </div>
+      </div>
+
+      {# Recomendación de la evaluación de riesgo #}
+      {% if evaluacion and evaluacion.recomendacion_final %}
+        <div class="caja-conclusion-item">
+          <div class="caja-conclusion-label">Recomendación del evaluador</div>
+          <div class="caja-conclusion-texto">{{ evaluacion.recomendacion_final }}</div>
+        </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  {# --- PIE DE PORTADA --- #}
+  <div class="portada-pie">
+    <div class="pie-izq">
+      {% if estudio.fecha_realizacion %}
+        Fecha de realización: {{ estudio.fecha_realizacion|date:"d/m/Y" }}
+      {% else %}
+        Fecha de realización: N/A
+      {% endif %}
+      {% if estudio.fecha_programada_visita %}
+        &nbsp;|&nbsp; Visita programada: {{ estudio.fecha_programada_visita|date:"d/m/Y" }}
+      {% endif %}
+    </div>
+    <div class="pie-der">
+      {% if estudio.fecha_aprobacion %}
+        Fecha de aprobación: {{ estudio.fecha_aprobacion|date:"d/m/Y" }}
+      {% endif %}
+      {% if estudio.created_by %}
+        &nbsp;|&nbsp; Evaluador: {{ estudio.created_by.get_full_name|default:estudio.created_by.username }}
+      {% endif %}
+    </div>
+  </div>
+
+</div>

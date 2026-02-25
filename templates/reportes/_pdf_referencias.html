@@ -1,0 +1,198 @@
+{# ============================================================
+   PÁGINA 5 — REFERENCIAS + OBSERVACIONES DE COLONOS
+   Contexto requerido:
+     - referencias: QuerySet[Referencia]
+     - visita_principal: VisitaDomiciliaria|None
+============================================================ #}
+
+<div class="pagina-nueva">
+
+  <div class="seccion-titulo">Referencias</div>
+
+  {% if referencias %}
+    {% for ref in referencias %}
+      <div class="tarjeta-referencia evitar-corte">
+
+        {# Encabezado de la tarjeta #}
+        <div class="tarjeta-referencia-header">
+          <div class="ref-nombre">
+            {{ ref.nombre|default:"N/A" }}
+            <span style="font-weight:normal; font-size:8pt; color:#666; margin-left:6pt;">
+              — {{ ref.get_tipo_display }}
+            </span>
+          </div>
+          <div class="ref-badge">
+            {% if ref.verificada %}
+              <span class="badge badge-verificado">&#10003; Verificada</span>
+            {% else %}
+              <span class="badge badge-no-verificado">Pendiente de verificar</span>
+            {% endif %}
+          </div>
+        </div>
+
+        {# Cuerpo de la tarjeta #}
+        <div class="tarjeta-referencia-body">
+
+          {# Datos de contacto en 2 columnas #}
+          <div class="grid-2col" style="margin-bottom:6pt;">
+            <div class="col-izq">
+              <table class="tabla-datos">
+                <tbody>
+                  <tr>
+                    <th>Teléfono</th>
+                    <td>{{ ref.telefono|default:"N/A" }}</td>
+                  </tr>
+                  <tr>
+                    <th>Correo electrónico</th>
+                    <td>{{ ref.email|default:"N/A" }}</td>
+                  </tr>
+                  <tr>
+                    <th>Relación / Parentesco</th>
+                    <td>{{ ref.parentesco_o_relacion|default:"N/A" }}</td>
+                  </tr>
+                  <tr>
+                    <th>Tiempo de conocerse</th>
+                    <td>
+                      {{ ref.tiempo_conocer_anios }} año{% if ref.tiempo_conocer_anios != 1 %}s{% endif %}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="col-der">
+              {% if ref.domicilio %}
+                <table class="tabla-datos">
+                  <tbody>
+                    <tr>
+                      <th>Domicilio</th>
+                      <td>{{ ref.domicilio }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              {% endif %}
+              {% if ref.verificada and ref.fecha_verificacion %}
+                <div style="margin-top:4pt; font-size:7.5pt; color:#666;">
+                  Verificada el: {{ ref.fecha_verificacion|date:"d/m/Y H:i" }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+
+          {# Información de verificación (solo si fue contactada) #}
+          {% if ref.verificada %}
+            <div style="border-top:1px dashed #ddd; padding-top:6pt; margin-top:2pt;">
+              <div style="font-size:7.5pt; font-weight:bold; color:#7B6FA8; text-transform:uppercase; margin-bottom:4pt;">
+                Información obtenida al verificar
+              </div>
+
+              <div class="grid-2col">
+                <div class="col-izq">
+                  {% if ref.conducta %}
+                    <div class="dato-linea">
+                      <strong>Conducta observada:</strong><br>
+                      <span style="font-size:8.5pt;">{{ ref.conducta }}</span>
+                    </div>
+                  {% endif %}
+                  {% if ref.cualidades %}
+                    <div class="dato-linea" style="margin-top:4pt;">
+                      <strong>Cualidades destacadas:</strong><br>
+                      <span style="font-size:8.5pt;">{{ ref.cualidades }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+                <div class="col-der">
+                  {% if ref.actividad_tiempo_libre %}
+                    <div class="dato-linea">
+                      <strong>Actividades en tiempo libre:</strong><br>
+                      <span style="font-size:8.5pt;">{{ ref.actividad_tiempo_libre }}</span>
+                    </div>
+                  {% endif %}
+                  {% if ref.lugares_laborado %}
+                    <div class="dato-linea" style="margin-top:4pt;">
+                      <strong>Lugares donde ha laborado:</strong><br>
+                      <span style="font-size:8.5pt;">{{ ref.lugares_laborado }}</span>
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              {% if ref.comentarios_verificacion %}
+                <div style="margin-top:5pt;">
+                  <strong style="font-size:8pt; color:#666;">Comentarios de verificación:</strong>
+                  <div class="bloque-texto" style="margin-top:3pt;">{{ ref.comentarios_verificacion }}</div>
+                </div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+        </div>
+      </div>
+    {% endfor %}
+
+  {% else %}
+    <div class="sin-datos">No se registraron referencias para este candidato</div>
+  {% endif %}
+
+  {# ============================================================
+     SECCIÓN: OBSERVACIONES DE LA VISITA DOMICILIARIA
+  ============================================================ #}
+  {% if visita_principal %}
+
+    {% if visita_principal.comentarios_colonos %}
+      <div class="subseccion-titulo" style="margin-top:12pt;">Comentarios de Vecinos / Colonos</div>
+      <div class="bloque-texto evitar-corte">{{ visita_principal.comentarios_colonos }}</div>
+    {% endif %}
+
+    {% if visita_principal.observaciones_generales %}
+      <div class="subseccion-titulo" style="margin-top:8pt;">Observaciones Generales de la Visita</div>
+      <div class="bloque-texto evitar-corte">{{ visita_principal.observaciones_generales }}</div>
+    {% endif %}
+
+    {% if visita_principal.recomendacion %}
+      <div class="subseccion-titulo" style="margin-top:8pt;">Recomendación del Visitador</div>
+      <div class="bloque-texto evitar-corte" style="border-left-color:#2E7D32;">{{ visita_principal.recomendacion }}</div>
+    {% endif %}
+
+    {# Datos de entorno de la visita #}
+    <div class="subseccion-titulo" style="margin-top:8pt;">Entorno del Domicilio</div>
+    <table class="tabla-datos">
+      <tbody>
+        <tr>
+          <th style="width:30%;">Tipo de zona</th>
+          <td style="width:20%;">{{ visita_principal.get_tipo_zona_display|default:"N/A" }}</td>
+          <th style="width:25%;">¿Persona encontrada?</th>
+          <td>{% if visita_principal.persona_encontrada %}Sí{% else %}No{% endif %}</td>
+        </tr>
+        <tr>
+          <th>Nivel de seguridad (1-5)</th>
+          <td>
+            {{ visita_principal.nivel_seguridad|default:"N/A" }}
+            <span style="color:#888; font-size:7.5pt;">/5</span>
+          </td>
+          <th>Verificación de domicilio</th>
+          <td>{% if visita_principal.verificacion_domicilio %}Confirmado{% else %}No confirmado{% endif %}</td>
+        </tr>
+        <tr>
+          <th>Nivel de ruido (1-5)</th>
+          <td>{{ visita_principal.nivel_ruido|default:"N/A" }} <span style="color:#888; font-size:7.5pt;">/5</span></td>
+          <th>Acceso a transporte (1-5)</th>
+          <td>{{ visita_principal.acceso_transporte|default:"N/A" }} <span style="color:#888; font-size:7.5pt;">/5</span></td>
+        </tr>
+        <tr>
+          <th>Fecha de visita</th>
+          <td colspan="3">{{ visita_principal.fecha_visita|date:"d/m/Y H:i" }}</td>
+        </tr>
+        {% if visita_principal.evaluador %}
+          <tr>
+            <th>Evaluador</th>
+            <td colspan="3">{{ visita_principal.evaluador.get_full_name|default:visita_principal.evaluador.username }}</td>
+          </tr>
+        {% endif %}
+      </tbody>
+    </table>
+
+  {% else %}
+    <div class="sin-datos" style="margin-top:12pt;">No se registró visita domiciliaria para este estudio</div>
+  {% endif %}
+
+</div>

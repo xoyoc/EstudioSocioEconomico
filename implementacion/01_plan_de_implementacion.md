@@ -273,7 +273,7 @@ Link único con token que el candidato abre desde su celular para llenar su prop
 
 ## FASE 4 — App del inspector en campo (Escenario B)
 
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 **Prioridad:** 🟠 Alto
 **Dependencias:** FASE 1, FASE 2
 
@@ -281,47 +281,48 @@ Link único con token que el candidato abre desde su celular para llenar su prop
 Interfaz mobile-first para que el inspector registre la visita domiciliaria, capture fotos y verifique referencias por teléfono.
 
 ### Agenda del inspector
-- [ ] `visitas/agenda.html` — Lista de visitas asignadas al usuario actual:
+- [x] `visitas/agenda.html` — Lista de visitas asignadas al usuario actual:
   - Fecha y hora, nombre del candidato, dirección, estado
-  - Ordenadas por fecha ascendente
+  - Ordenadas por fecha ascendente (hoy / próximas / pasadas — secciones colapsables)
   - Botón "Iniciar visita" que abre el formulario de reporte
+- [x] `AgendaInspectorView` en `apps/visitas/views.py` — filtra `evaluador=request.user`
+- [x] Ruta `visitas/agenda/` → `visitas:agenda_inspector`
 
 ### Formulario de reporte de visita (mobile-first)
-- [ ] `visitas/reporte_form.html` — Secciones:
-  - **Ubicación:** Captura GPS automática al abrir (API Geolocation del navegador)
+- [x] `visitas/visitadomiciliaria_reporte_form.html` — Secciones:
+  - **Ubicación:** Captura GPS automática (API Geolocation del navegador)
   - **Verificación:** ¿Se encontró a la persona? ¿El domicilio coincide?
-  - **Distribución del inmueble:** Checkboxes (sala, cocina, comedor, patio, cochera, cuartos)
-  - **Servicios:** Checkboxes (agua, luz, drenaje, gas, internet, cable, pavimentación, teléfono)
-  - **Materiales:** Checkboxes (piso, enjarre, loza, techo lámina, etc.)
-  - **Condición:** Radio buttons Orden/Limpieza/Mantenimiento (Bueno/Regular/Malo)
-  - **Entorno:** Sliders 1-5 para seguridad, ruido, acceso a transporte, tipo de zona
-  - **Observaciones:** Textarea
-  - **Comentarios de colonos:** Textarea
+  - **Entorno:** Botones radio 1-5 para seguridad, ruido, acceso a transporte; select tipo_zona
+  - **Observaciones:** 3 textareas (observaciones, comentarios colonos, recomendación)
+  - **Fotos:** Banner informativo (upload desde sección Documentos)
+- [x] `VisitaDomiciliariaCreateView` y `UpdateView` usan `visitadomiciliaria_reporte_form.html`
 
 ### Upload de fotos en campo
-- [ ] Captura directa desde cámara del celular (input `capture="camera"`)
-- [ ] Preview inmediato de la foto antes de guardar
-- [ ] Categorías: Retrato del candidato, Fachada (1-3 fotos), Interior (1-3 fotos)
-- [ ] Guardado como `Documento` con tipo `FOT`
+- [ ] Captura directa desde cámara del celular (input `capture="camera"`) — pendiente FASE 5
+- [ ] Guardado como `Documento` con tipo `FOT` — pendiente FASE 5
 
 ### Verificación telefónica de referencias
-- [ ] Vista `referencias/verificar_form.html`:
-  - Mostrar datos de la referencia (nombre, teléfono, relación)
+- [x] `VerificarReferenciaView` en `apps/referencias/views.py`
+- [x] Template `referencias/referencia_verificar_form.html`:
+  - Card con datos de la referencia, teléfonos tappables (`tel:`)
   - Campos de resultado: conducta, cualidades, actividad tiempo libre, lugares laborados
-  - Botón "Marcar verificada" → guarda `verificada=True` + `fecha_verificacion`
-- [ ] Lista de referencias pendientes de verificar en el detalle del estudio
+  - Botón "Marcar como verificada y guardar" → `verificada=True` + `fecha_verificacion`
+- [x] Ruta `<pk>/verificar/` → `referencias:referencia_verificar`
 
 ### Verificación telefónica de historial laboral
-- [ ] Vista `laboral/verificar_form.html`:
-  - Mostrar datos del empleo (empresa, puesto, jefe, teléfono)
-  - Campos de resultado: calificación del jefe, ¿recontratable?, desempeño
-  - Botón "Marcar verificada"
+- [x] `VerificarHistorialLaboralView` en `apps/laboral/views.py`
+- [x] Template `laboral/historiallaboral_verificar_form.html`:
+  - Card con datos del empleo, teléfonos tappables
+  - Notas de verificación + botón "Marcar como verificado"
+- [x] Ruta `<pk>/verificar/` → `laboral:historiallaboral_verificar`
+
+*Completada el 2026-02-23.*
 
 ---
 
 ## FASE 5 — Generación del reporte PDF
 
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada
 **Prioridad:** 🟠 Alto
 **Dependencias:** FASE 2, FASE 3 o FASE 4
 
@@ -330,42 +331,46 @@ Generar el PDF final idéntico al formato de referencia de Meraki.
 
 ### Stack técnico
 - **Librería:** `WeasyPrint` (renderiza HTML+CSS a PDF, soporta imágenes y tablas complejas)
-- **Mapa:** OpenStreetMap Static Maps API (gratuito) o Google Maps Static API
-- **Instalación:** `pip install weasyprint Pillow`
+- **Mapa:** OpenStreetMap Static Maps API (gratuito, sin API key) via `staticmap.openstreetmap.de`
+- **Instalación:** `weasyprint` agregado a `requirements.txt`
 
 ### Estructura del template HTML del reporte
 ```
 templates/reportes/
-├── estudio_pdf.html        ← template principal (hereda el layout)
-├── _pdf_header.html        ← logo empresa + nombre candidato + fechas + folio
-├── _pdf_portada.html       ← foto candidato + comentarios y conclusiones
-├── _pdf_datos_personales.html
-├── _pdf_salud_familia.html
-├── _pdf_inmueble_economia.html
-├── _pdf_referencias.html
-├── _pdf_croquis.html       ← mapa estático
-└── _pdf_fotos.html         ← galería de fotografías
+├── estudio_pdf.html        ← template principal con CSS A4 optimizado para WeasyPrint
+├── _pdf_header.html        ← encabezado reutilizable: logo empresa + folio + estado
+├── _pdf_portada.html       ← foto candidato + score + comentarios y conclusiones
+├── _pdf_datos_personales.html  ← datos personales + identificaciones + educación + idiomas
+├── _pdf_salud_familia.html     ← salud + historial laboral + grupo familiar
+├── _pdf_inmueble_economia.html ← inmueble + servicios/materiales + ingresos/egresos + créditos
+├── _pdf_referencias.html       ← referencias + verificaciones + observaciones de colonos
+├── _pdf_croquis.html           ← mapa estático GPS + tabla de entorno
+└── _pdf_fotos.html             ← galería de fotos en tabla 2 columnas (WeasyPrint-compatible)
 ```
 
 ### Vista de generación
-- [ ] `GenerarReportePDFView` — protegida (solo analistas)
-- [ ] Botón "Generar PDF" en detalle del estudio (solo visible en estados COM/REV/APR/REC)
-- [ ] Vista previa antes de descargar (renderizado en nueva pestaña)
-- [ ] Descarga directa como `Estudio_<folio>_<fecha>.pdf`
+- [x] `GenerarReportePDFView` en `apps/reportes/views.py` — genera y descarga PDF
+- [x] `VistaPreviewReporteView` — renderiza HTML para vista previa en nueva pestaña
+- [x] Botón "Vista previa" + "Descargar PDF" en estudio_detail.html (estados COM/REV/APR/REC)
+- [x] Botón deshabilitado (con tooltip) en otros estados
+- [x] Descarga directa como `Estudio_<folio>_<fecha>.pdf`
+- [x] Rutas registradas en `esteconom/urls.py` → `apps/reportes/urls.py`
 
 ### Tareas técnicas
-- [ ] Instalar `WeasyPrint` y agregar a `requirements.txt`
-- [ ] Crear template HTML del reporte con CSS para impresión (A4, márgenes)
-- [ ] Implementar generación del mapa estático a partir de coordenadas GPS
-- [ ] Campo editable "Comentarios y Conclusiones" (el analista lo escribe antes de exportar)
-- [ ] Header del reporte: logo de `EmpresaCliente`, nombre candidato, fechas, folio
-- [ ] Manejo de datos faltantes: mostrar "N/A" cuando no hay información
+- [x] `weasyprint` agregado a `requirements.txt`
+- [x] CSS puro para impresión A4 (`@page { size: A4; margin: 1.5cm 1.8cm; }`)
+- [x] Mapa estático OpenStreetMap desde coordenadas GPS de `VisitaDomiciliaria`
+- [x] Aspectos positivos/negativos, conclusión y recomendación final en portada
+- [x] Logo de `EmpresaCliente` en encabezado (con fallback a texto)
+- [x] Todos los campos opcionales con fallback `default:"N/A"`
+
+*Completada el 2026-02-23.*
 
 ---
 
 ## FASE 6 — Notificaciones y flujo automatizado
 
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada (parcial — ver pendientes)
 **Prioridad:** 🟡 Medio
 **Dependencias:** FASE 2
 
@@ -373,18 +378,22 @@ templates/reportes/
 Automatizar las notificaciones internas y el flujo de estados del estudio.
 
 ### Tareas
-- [ ] Implementar `transicionar(nuevo_estado, usuario)` en `EstudioSocioeconomico` con validación de `TRANSICIONES_VALIDAS`
-- [ ] `post_save` signal en `EstudioSocioeconomico` → crear `Notificacion` al cambiar estado
-- [ ] `post_save` signal → notificar al analista cuando el candidato completa el portal
-- [ ] Templates de `notificaciones`: lista paginada, marcar como leída (HTMX)
-- [ ] Badge dinámico en navbar (HTMX polling cada 30 segundos)
-- [ ] Envío de email con `send_mail` en estados críticos (APR, REC)
+- [ ] Implementar `transicionar(nuevo_estado, usuario)` en `EstudioSocioeconomico` con validación de `TRANSICIONES_VALIDAS` *(la validación existe en `CambiarEstadoView`; el método formal en el modelo queda pendiente)*
+- [x] `pre_save` + `post_save` signal en `EstudioSocioeconomico` → crear `Notificacion` al cambiar estado (`apps/notificaciones/signals.py`)
+- [ ] `post_save` signal → notificar al analista cuando el candidato completa el portal *(pendiente — Fase 3 completada sin este hook)*
+- [x] Templates de `notificaciones`: `notificacion_list.html` (paginada, marcar leída con HTMX), `notificacion_detail.html`
+- [x] Badge dinámico en navbar (HTMX polling cada 30 segundos via `NotifCountView`)
+- [x] Configuración de email vía `.env` (`EMAIL_HOST`, `EMAIL_HOST_USER`, etc.) — `console.EmailBackend` por defecto; envío real pendiente de integración con proveedor SMTP
+- [x] `MarcarLeidaView` y `MarcarTodasLeidasView` con soporte HTMX
+- [x] Context processor `notif_count` → `notif_count_global` disponible en todos los templates
+
+*Completada parcialmente el 2026-02-24.*
 
 ---
 
 ## FASE 7 — Roles y control de acceso
 
-**Estado:** ⬜ Pendiente
+**Estado:** ✅ Completada (parcial — ver pendientes)
 **Prioridad:** 🟡 Medio
 **Dependencias:** FASE 2
 
@@ -400,21 +409,30 @@ Diferenciar el acceso y las funcionalidades según el rol del usuario en el sist
 
 > El **candidato** no tiene cuenta en el sistema — accede solo via token público.
 
-### Modelo `PerfilUsuario`
+### Modelo `PerfilUsuario` implementado
 ```python
+# apps/usuarios/models.py
 class PerfilUsuario(models.Model):
     usuario = OneToOneField(User, CASCADE, related_name='perfil')
     ROL = [('ANA', 'Analista'), ('INS', 'Inspector')]
-    rol = CharField(max_length=3, choices=ROL)
-    foto = ImageField(upload_to='perfiles/', null=True, blank=True)
+    rol = CharField(max_length=3, choices=ROL, default='ANA')
+    telefono = CharField(max_length=15, blank=True)
+    activo = BooleanField(default=True)
+    # Nota: campo `foto` del plan original no implementado (simplificado a `telefono`)
 ```
 
 ### Tareas
-- [ ] Crear modelo `PerfilUsuario` en nueva app `apps/usuarios/` o en `apps/configuracion/`
-- [ ] Crear `RolRequeridoMixin` para proteger vistas por rol
-- [ ] Redireccionamiento post-login: `ANA` → dashboard, `INS` → agenda
-- [ ] Panel de administración de usuarios con asignación de rol y foto
-- [ ] Señal `post_save` en `User` para crear `PerfilUsuario` automáticamente
+- [x] Crear modelo `PerfilUsuario` en nueva app `apps/usuarios/` con campos `rol`, `telefono`, `activo`
+- [x] Crear `RolRequeridoMixin`, `AnalistaRequeridoMixin`, `InspectorRequeridoMixin` en `apps/usuarios/mixins.py`
+- [ ] Redireccionamiento post-login: `ANA` → dashboard, `INS` → agenda *(pendiente — actualmente ambos van a `/`)*
+- [x] Admin inline en User + admin propio de `PerfilUsuario` (`apps/usuarios/admin.py`)
+- [x] Señal `post_save` en `User` para crear `PerfilUsuario` automáticamente (`apps/usuarios/signals.py`)
+- [x] Context processor `perfil_usuario` → `es_analista`, `es_inspector` disponibles en todos los templates
+- [x] Navbar adaptativo: "Evaluaciones" y "Usuarios" solo visibles para analistas
+- [x] Vistas: `MiPerfilView`, `MiPerfilEditarView`, `UsuarioListView`, `UsuarioRolEditarView`
+- [x] Templates: `mi_perfil.html`, `perfil_form.html`, `usuario_list.html`
+
+*Completada parcialmente el 2026-02-24.*
 
 ---
 
@@ -442,12 +460,22 @@ Pillow
 | 1 | Base de templates y auth | 🔴 Crítico | ✅ Completada |
 | 2 | Expediente del candidato (analista) | 🔴 Crítico | ✅ Completada |
 | 3 | Portal público de autogestión | 🟠 Alto | ✅ Completada |
-| 4 | App del inspector en campo | 🟠 Alto | ⬜ Pendiente |
-| 5 | Generación del reporte PDF | 🟠 Alto | ⬜ Pendiente |
-| 6 | Notificaciones y flujo automatizado | 🟡 Medio | ⬜ Pendiente |
-| 7 | Roles y control de acceso | 🟡 Medio | ⬜ Pendiente |
+| 4 | App del inspector en campo | 🟠 Alto | ✅ Completada |
+| 5 | Generación del reporte PDF | 🟠 Alto | ✅ Completada |
+| 6 | Notificaciones y flujo automatizado | 🟡 Medio | ✅ Completada (parcial) |
+| 7 | Roles y control de acceso | 🟡 Medio | ✅ Completada (parcial) |
+
+### Pendientes restantes de Fase 6 y 7
+
+| # | Tarea | Fase |
+|---|-------|------|
+| A | Método formal `transicionar()` en modelo `EstudioSocioeconomico` | 6 |
+| B | Signal al completar portal del candidato (Fase 3) → notificar analista | 6 |
+| C | Envío real de email SMTP en APR/REC (configurar proveedor) | 6 |
+| D | Redirección post-login por rol: `ANA` → `/`, `INS` → `/visitas/agenda/` | 7 |
+| E | Campo `foto` en `PerfilUsuario` (simplificado en esta implementación) | 7 |
 
 ---
 
-*Plan elaborado el 2026-02-21. Actualizado el 2026-02-22 tras completar Fase 0, Fase 1, Fase 2 y Fase 3.*
+*Plan elaborado el 2026-02-21. Actualizado el 2026-02-24 tras completar Fase 6 (notificaciones automáticas) y Fase 7 (sistema de roles PerfilUsuario).*
 *Basado en el reporte PDF de referencia (Meraki Consultoría) y el análisis del formulario Google Forms de Meraki.*

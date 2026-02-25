@@ -39,14 +39,20 @@
                class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-purple-50 hover:text-purple-700">
               Estudios
             </a>
-            <a href="{% url 'visitas:visitadomiciliaria_list' %}"
+            <a href="{% url 'visitas:agenda_inspector' %}"
                class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-purple-50 hover:text-purple-700">
               Visitas
             </a>
+            {% if es_analista or user.is_superuser %}
             <a href="{% url 'evaluacion:evaluacionriesgo_list' %}"
                class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-purple-50 hover:text-purple-700">
               Evaluaciones
             </a>
+            <a href="{% url 'usuarios:usuario_list' %}"
+               class="px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:bg-purple-50 hover:text-purple-700">
+              Usuarios
+            </a>
+            {% endif %}
           </div>
           {% endif %}
         </div>
@@ -54,17 +60,20 @@
         <!-- User area -->
         {% if user.is_authenticated %}
         <div class="flex items-center gap-3">
-          <a href="{% url 'notificaciones:notificacion_list' %}"
-             class="p-2 text-gray-500 hover:text-purple-600 rounded-md hover:bg-purple-50"
-             title="Notificaciones">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
-            </svg>
-          </a>
-          <span class="hidden sm:inline text-sm text-gray-600">
+          <div id="notif-badge-wrap"
+               hx-get="{% url 'notificaciones:notif_count' %}"
+               hx-trigger="every 30s"
+               hx-swap="innerHTML">
+            {% include 'components/notif_badge.html' with notif_count=notif_count_global %}
+          </div>
+          <a href="{% url 'usuarios:mi_perfil' %}"
+             class="hidden sm:inline text-sm text-gray-600 hover:text-purple-700 hover:underline"
+             title="Ver mi perfil">
             {{ user.get_full_name|default:user.username }}
-          </span>
+            {% if perfil_usuario %}
+            <span class="text-xs text-gray-400">({{ perfil_usuario.get_rol_display }})</span>
+            {% endif %}
+          </a>
           <form method="post" action="{% url 'logout' %}">
             {% csrf_token %}
             <button type="submit"
