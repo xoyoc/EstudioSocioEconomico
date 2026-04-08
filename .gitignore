@@ -281,4 +281,12 @@ poetry.toml
 # LSP config files
 pyrightconfig.json
 
+# Proyectos locales
+sqlite_backup.json
+db.sqlite3
+db.sqlite3-limpia
+.claude
+AGENTES.md
+CLAUDE.md
+
 # End of https://www.toptal.com/developers/gitignore/api/linux,python,django
