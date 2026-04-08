@@ -15,7 +15,7 @@ class Documento(TimestampModel):
         ('DOM', 'Comprobante de domicilio'),
         ('ING', 'Comprobante de ingresos'),
         ('EST', 'Estado de cuenta'),
-        ('TIT', 'Título/Cédula'),
+        ('TIT', 'Título/Cédula o Comprobante de último grado de estudio'),
         ('ACT', 'Acta de nacimiento'),
         ('CUR', 'CURP'),
         ('RFC', 'RFC'),

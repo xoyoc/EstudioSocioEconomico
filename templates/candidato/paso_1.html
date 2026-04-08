@@ -218,10 +218,12 @@ document.getElementById('selfie-input').addEventListener('change', function(e) {
         </label>
         <input type="text" name="{{ form.curp.html_name }}" id="{{ form.curp.id_for_label }}"
                value="{{ form.curp.value|default:'' }}"
-               placeholder="18 caracteres"
+               placeholder="18 caracteres  Ej: GOML800101HDFRNS09"
                maxlength="18"
+               autocapitalize="characters" autocorrect="off" spellcheck="false"
                class="block w-full px-4 py-3 text-base font-mono border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 uppercase transition-colors
                       {% if form.curp.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        <p class="mt-1 text-xs text-gray-400">Escribe los 18 caracteres en mayúsculas (letras y números)</p>
         {% for error in form.curp.errors %}
         <p class="mt-1 text-xs text-red-600">{{ error }}</p>
         {% endfor %}
@@ -233,10 +235,12 @@ document.getElementById('selfie-input').addEventListener('change', function(e) {
         </label>
         <input type="text" name="{{ form.rfc.html_name }}" id="{{ form.rfc.id_for_label }}"
                value="{{ form.rfc.value|default:'' }}"
-               placeholder="13 caracteres con homoclave"
+               placeholder="13 caracteres  Ej: GOML800101AB3"
                maxlength="13"
+               autocapitalize="characters" autocorrect="off" spellcheck="false"
                class="block w-full px-4 py-3 text-base font-mono border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 uppercase transition-colors
                       {% if form.rfc.errors %}border-red-400 focus:ring-red-300 bg-red-50{% endif %}">
+        <p class="mt-1 text-xs text-gray-400">4 letras + 6 dígitos de fecha + 3 caracteres de homoclave</p>
         {% for error in form.rfc.errors %}
         <p class="mt-1 text-xs text-red-600">{{ error }}</p>
         {% endfor %}

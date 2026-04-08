@@ -129,7 +129,8 @@ class Domicilio(TimestampModel):
 
     # Tiempo de residencia
     tiempo_residencia_anios = models.IntegerField(
-        validators=[MinValueValidator(0)], null=True, blank=True
+        validators=[MinValueValidator(0)], null=True, blank=True,
+        verbose_name='Tiempo de residencia en años'
     )
     tiempo_residencia_meses = models.IntegerField(
         validators=[MinValueValidator(0), MaxValueValidator(11)], null=True, blank=True

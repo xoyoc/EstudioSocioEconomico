@@ -36,7 +36,24 @@ class Paso1PersonaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # Normalizar CURP y RFC a mayúsculas antes de que corran los validadores
+        if args and args[0]:
+            data = args[0].copy()
+            for campo in ('curp', 'rfc'):
+                if campo in data:
+                    data[campo] = data[campo].strip().upper()
+            args = (data,) + args[1:]
         super().__init__(*args, **kwargs)
+        # Fijar formato de fecha: el input type="date" siempre envía yyyy-mm-dd,
+        # pero con LANGUAGE_CODE='es-mx' Django esperaría dd/mm/yyyy sin esto.
+        self.fields['fecha_nacimiento'].input_formats = ['%Y-%m-%d']
+        # Atributos mobile para CURP y RFC: evitar autocorrect del teclado Android
+        for campo in ('curp', 'rfc'):
+            self.fields[campo].widget.attrs.update({
+                'autocapitalize': 'characters',
+                'autocorrect': 'off',
+                'spellcheck': 'false',
+            })
         for field in self.fields.values():
             field.widget.attrs.setdefault('class', 'w-full rounded-lg border-gray-300 focus:ring-purple-500 focus:border-purple-500')
 
