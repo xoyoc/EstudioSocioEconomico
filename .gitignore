@@ -288,5 +288,6 @@ db.sqlite3-limpia
 .claude
 AGENTES.md
 CLAUDE.md
+.env
 
 # End of https://www.toptal.com/developers/gitignore/api/linux,python,django
