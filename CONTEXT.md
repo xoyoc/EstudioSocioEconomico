@@ -1358,6 +1358,8 @@ path('api/', include('apps.api.urls')),
 | `DEBUG` | No | `False` | Modo depuración |
 | `ALLOWED_HOSTS` | No | `localhost` | Hosts permitidos (CSV) |
 | `DATABASE_URL` | No | SQLite local | URL de conexión PostgreSQL |
+| `GOOGLE_MAPAS_API_KEY` | No | `''` | API key de Google Maps Static API (croquis PDF) |
+| `MAPBOX_API_KEY` | No | `''` | Access token de Mapbox Static Images (croquis PDF) |
 | `USE_SPACES` | No | `False` | Activar S3/Digital Ocean Spaces para archivos |
 | `AWS_ACCESS_KEY_ID` | Si (Spaces) | — | Access key del bucket S3/Spaces |
 | `AWS_SECRET_ACCESS_KEY` | Si (Spaces) | — | Secret key del bucket S3/Spaces |
@@ -1370,6 +1372,11 @@ SECRET_KEY=tu-clave-secreta-aqui
 DEBUG=True
 ALLOWED_HOSTS=localhost,127.0.0.1
 # DATABASE_URL=postgres://user:pass@localhost:5432/estudioeconom
+
+# Mapas estáticos para el croquis del reporte PDF
+# Elige UNO (prioridad: Google > Mapbox > OpenStreetMap sin key)
+# GOOGLE_MAPS_API_KEY=AIzaSy...
+# MAPBOX_API_KEY=pk.eyJ1...
 ```
 
 ---

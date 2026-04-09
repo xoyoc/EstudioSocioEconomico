@@ -196,6 +196,11 @@ EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@meraki-consultoria.mx')
 
+# Mapas estáticos para el reporte PDF — croquis del domicilio
+# Prioridad: GOOGLE_MAPS_API_KEY → MAPBOX_API_KEY → OpenStreetMap (sin key)
+GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPAS_API_KEY', default='')
+MAPBOX_API_KEY = config('MAPBOX_API_KEY', default='')
+
 # Static files — WhiteNoise para producción (solo cuando NO se usa Spaces)
 if not USE_SPACES:
     STORAGES = {
