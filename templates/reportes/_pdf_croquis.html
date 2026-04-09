@@ -31,8 +31,11 @@
     </div>
   {% else %}
     <div class="sin-datos" style="min-height:6cm; display:table-cell; vertical-align:middle; width:100%;">
-      No se registraron coordenadas GPS durante la visita domiciliaria.<br>
-      <span style="font-size:8pt;">El croquis no puede generarse sin coordenadas de ubicación.</span>
+      No fue posible generar el croquis del domicilio.<br>
+      <span style="font-size:8pt;">
+        No se encontraron coordenadas GPS en la visita, el domicilio declarado,
+        ni fue posible geocodificar la dirección.
+      </span>
     </div>
   {% endif %}
 
@@ -144,11 +147,18 @@
     </div>
   {% endif %}
 
-  {# Nota técnica al pie #}
+  {# Nota técnica al pie según el origen de las coordenadas #}
   {% if mapa_url %}
     <div style="margin-top:8pt; font-size:7pt; color:#aaa; text-align:center; border-top:1px solid #eee; padding-top:4pt;">
-      Mapa generado mediante API de cartografía estática. Las coordenadas corresponden al punto registrado
-      durante la visita domiciliaria. La imagen puede no reflejar cambios recientes en la vialidad.
+      {% if origen_coordenadas == 'visita' %}
+        Mapa generado a partir de coordenadas GPS registradas durante la visita domiciliaria.
+      {% elif origen_coordenadas == 'domicilio' %}
+        Mapa generado a partir de coordenadas GPS capturadas por el candidato al registrar su domicilio.
+      {% elif origen_coordenadas == 'geocodificado' %}
+        Mapa generado mediante geocodificación automática de la dirección declarada (OpenStreetMap Nominatim).
+        La ubicación es aproximada y puede no ser exacta.
+      {% endif %}
+      La imagen puede no reflejar cambios recientes en la vialidad.
     </div>
   {% endif %}
 

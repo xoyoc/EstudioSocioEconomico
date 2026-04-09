@@ -1,10 +1,30 @@
 # Documento de Contexto Arquitectónico — EstudioEcoNom
 
-**Versión:** 1.5
-**Fecha:** 2026-03-08
+**Versión:** 2.0
+**Fecha:** 2026-04-09
 **Proyecto:** Sistema de Gestión de Estudios Socioeconómicos (EstudioEcoNom)
 **Stack:** Django 6.0.2 · SQLite/PostgreSQL · Tailwind CSS CDN · WeasyPrint · Python 3.x
 **Idioma:** Español mexicano (`es-mx`) · Zona horaria: `America/Mexico_City`
+
+---
+
+## ⚠️ Protocolo de Actualización Obligatorio
+
+**Este documento DEBE actualizarse cada vez que se realice cualquier cambio en el proyecto.**
+
+Antes de cerrar cualquier sesión de trabajo, actualizar:
+- **Versión:** incrementar número menor (e.g. 2.0 → 2.1) por cambios menores, mayor (2.x → 3.0) por cambios estructurales
+- **Fecha:** poner la fecha actual
+- **Secciones afectadas:** modelos, vistas, URLs, templates, configuración, fases
+- **Nota al pie:** agregar entrada al historial de cambios (última línea del documento)
+
+Cambios que SIEMPRE requieren actualización de este archivo:
+- Nuevos modelos o campos en modelos existentes
+- Nuevas vistas, URLs o namespaces
+- Nuevos templates o componentes reutilizables
+- Cambios en settings.py (middleware, context processors, apps instaladas)
+- Nuevas fases completadas o tareas del plan
+- Correcciones a información incorrecta en este documento
 
 ---
 
@@ -172,6 +192,50 @@ Los siguientes modelos tienen un workflow de verificación con 3 campos:
 | `Referencia` | `verificada` (bool) | `fecha_verificacion` | `comentarios_verificacion` |
 | `Documento` | `verificado` (bool) | `fecha_verificacion` | `verificado_por` (FK User) |
 | `Educacion` | `documento_verificado` (bool) | — | — |
+
+### 1.5 Configuración del Proyecto
+
+**`esteconom/settings.py`** — configuración clave:
+
+**INSTALLED_APPS (en orden):**
+Django built-in (admin, auth, contenttypes, sessions, messages, staticfiles) + apps personalizadas:
+`configuracion, personas, estudios, domicilios, economia, educacion, laboral, familia, referencias, visitas, evaluacion, documentos, notificaciones, auditorias, reportes, api, usuarios`
+
+**MIDDLEWARE (en orden):**
+1. `SecurityMiddleware`
+2. `WhiteNoiseMiddleware`
+3. `SessionMiddleware`
+4. `CommonMiddleware`
+5. `CsrfViewMiddleware`
+6. `AuthenticationMiddleware`
+7. `MessageMiddleware`
+8. `XFrameOptionsMiddleware`
+9. **`apps.usuarios.middleware.ModuloPermisosMiddleware`** (custom — después de Auth)
+
+**Context Processors registrados:**
+1. `django.template.context_processors.debug/request`
+2. `django.contrib.auth.context_processors.auth`
+3. `django.contrib.messages.context_processors.messages`
+4. `apps.notificaciones.context_processors.notif_count` → `notif_count_global`
+5. `apps.usuarios.context_processors.perfil_usuario` → `perfil_usuario`, `es_analista`, `es_inspector`, `es_auditor`, `modulos_permitidos`
+
+**Autenticación:**
+- `LOGIN_URL = 'login'`
+- `LOGIN_REDIRECT_URL = '/'`
+- `LOGOUT_REDIRECT_URL = 'login'`
+
+**Storage:**
+- Desarrollo: `FileSystemStorage` + WhiteNoise para estáticos
+- Producción con S3: `USE_SPACES=True` → `S3Boto3Storage` (django-storages + boto3)
+
+**Base de datos:**
+- Si `DATABASE_URL` definida → PostgreSQL (`dj_database_url.parse`)
+- Por defecto → SQLite `db.sqlite3`
+
+**`esteconom/urls.py`** — prefijos de URL:
+`/admin/`, `/accounts/`, `/configuracion/`, `/personas/`, `/estudios/`, `/domicilios/`, `/economia/`, `/educacion/`, `/laboral/`, `/familia/`, `/referencias/`, `/visitas/`, `/evaluacion/`, `/documentos/`, `/notificaciones/`, `/candidato/` (portal público), `/reportes/`, `/usuarios/`
+
+Media files (`DEBUG=True`): `/media/` → `MEDIA_ROOT`
 
 ---
 
@@ -387,6 +451,8 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 | `municipio` | CharField(100) | |
 | `estado` | CharField(100) | Estado de la República |
 | `pais` | CharField(100), default='México' | |
+| `latitud` | DecimalField(9,6), null | Capturada desde portal candidato o visita |
+| `longitud` | DecimalField(9,6), null | Capturada desde portal candidato o visita |
 | `tipo_inmueble` | choices: CAS/DEP, blank | Casa o Departamento |
 | `tipo_vivienda` | choices: PRO/PROHIP/REN/PRE/FAM/OTR, blank | Tenencia del inmueble |
 | `propietario_nombre` | CharField(200), blank | A nombre de quién está el domicilio |
@@ -412,6 +478,7 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 | `tiene_loza` | BooleanField | |
 | `tiene_puertas` | BooleanField | |
 | `orden_limpieza` | choices: BUE/REG/MAL, blank | Condición general del inmueble |
+| `observaciones_inmueble` | TextField, blank | Notas adicionales sobre el inmueble |
 | `tiempo_residencia_anios` | IntegerField, null | |
 | `tiempo_residencia_meses` | IntegerField, null, Min(0), Max(11) | |
 
@@ -591,6 +658,10 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 | `parentesco_o_relacion` | CharField(100) | |
 | `tiempo_conocer_anios` | IntegerField, MinValue(0) | |
 | `domicilio` | TextField, blank | Dirección de la referencia |
+| `actividad_tiempo_libre` | TextField, blank | Qué hace en su tiempo libre (capturado al verificar) |
+| `lugares_laborado` | TextField, blank | Lugares donde ha trabajado (capturado al verificar) |
+| `conducta` | TextField, blank | Descripción de conducta (capturado al verificar) |
+| `cualidades` | TextField, blank | Cualidades destacadas (capturado al verificar) |
 | `verificada` | BooleanField, default=False | |
 | `fecha_verificacion` | DateTimeField, null | |
 | `comentarios_verificacion` | TextField, blank | Notas del contacto |
@@ -623,6 +694,7 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 | `nivel_ruido` | IntegerField, Min(1), Max(5) | Escala Likert |
 | `acceso_transporte` | IntegerField, Min(1), Max(5) | Escala Likert |
 | `observaciones_generales` | TextField, blank | |
+| `comentarios_colonos` | TextField, blank | Observaciones/comentarios de vecinos del domicilio |
 | `recomendacion` | TextField, blank | |
 
 **NOTA:** Un estudio puede tener múltiples visitas (1..N). La relación es FK, no OneToOne.
@@ -673,13 +745,37 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 |-------|------|-------|
 | `persona` | FK → Persona, CASCADE | related_name: `documentos` |
 | `estudio` | FK → EstudioSocioeconomico, CASCADE, null | Opcional — puede ser doc general |
-| `tipo` | choices: IDE/DOM/ING/EST/TIT/ACT/CUR/RFC/FOT/OTR | 10 tipos de documento |
+| `tipo` | choices: IDE/DOM/ING/EST/TIT/ACT/CUR/RFC/FSE/FFA/FFR/FIZ/FDE/FDI/FOT/OTR | 16 tipos de documento |
 | `archivo` | FileField | Ruta: `documentos/%Y/%m/%d/` |
 | `nombre_archivo` | CharField(255) | Nombre original del archivo |
 | `tamaño` | IntegerField | En bytes |
 | `verificado` | BooleanField, default=False | |
 | `fecha_verificacion` | DateTimeField, null | |
 | `verificado_por` | FK → User, SET_NULL, null | Quién verificó |
+
+**Tipos de documento:**
+- `IDE` — Identificación oficial
+- `DOM` — Comprobante de domicilio
+- `ING` — Comprobante de ingresos
+- `EST` — Documento de estudios/escolar
+- `TIT` — Título profesional
+- `ACT` — Acta de nacimiento
+- `CUR` — CURP
+- `RFC` — Constancia de RFC
+- `FSE` — Foto selfie del candidato (portal paso 1)
+- `FFA` — Foto fachada del domicilio (portal paso 2)
+- `FFR` — Foto fachada referencia
+- `FIZ` — Foto interior izquierda
+- `FDE` — Foto interior derecha
+- `FDI` — Foto domicilio interior
+- `FOT` — Foto general
+- `OTR` — Otro
+
+**`FOTOS_TIPOS`** (frozenset en el modelo): `{FSE, FFA, FFR, FIZ, FDE, FDI, FOT}`
+
+**Properties:**
+- `es_foto` → `tipo in FOTOS_TIPOS`
+- `etiquetas` → propiedades dinámicas basadas en persona/estudio
 
 **NOTA:** Se requiere configurar `MEDIA_ROOT` y `MEDIA_URL` en settings para manejo de archivos.
 
@@ -733,7 +829,14 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 | `VistaPreviewReporteView` | `GET /reportes/estudio/<pk>/preview/` | Renderiza HTML del reporte en el navegador |
 | `GenerarReportePDFView` | `GET /reportes/estudio/<pk>/pdf/` | Descarga `Estudio_<folio>_<fecha>.pdf` |
 
-**Función `_get_contexto_pdf(estudio)`:** Centraliza la recolección de todos los datos del estudio para los templates. Genera automáticamente la URL del mapa estático de OpenStreetMap si hay coordenadas GPS en la visita principal.
+**Función `_get_contexto_pdf(estudio)`:** Centraliza la recolección de todos los datos del estudio para los templates. Genera el mapa usando 3 fuentes en cascada:
+1. `VisitaDomiciliaria.latitud/longitud` (inspector en campo — más preciso)
+2. `Domicilio.latitud/longitud` (capturado por candidato en paso_2 del portal)
+3. Geocodificación automática de la dirección vía **Nominatim** (OpenStreetMap, sin API key)
+
+El contexto incluye `origen_coordenadas` (`'visita'|'domicilio'|'geocodificado'|None`) para mostrar nota aclaratoria en el PDF.
+
+**Funciones auxiliares:** `_geocodificar_nominatim(domicilio)` y `_construir_mapa_url(lat, lon)`.
 
 **URL del mapa estático (sin API key):**
 ```python
@@ -762,7 +865,94 @@ f"https://staticmap.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=16&si
 
 ---
 
-### 2.15 `auditorias`, `api` — Placeholders
+### 2.15 `usuarios` — Gestión de Perfiles y Control de Acceso por Módulo
+
+**Propósito:** Extiende `auth.User` con rol, permisos granulares por módulo y middleware de protección de rutas.
+
+**Modelo `PerfilUsuario`** (OneToOne con `auth.User`)
+
+| Campo | Tipo | Notas |
+|-------|------|-------|
+| `usuario` | OneToOne → User, CASCADE | related_name: `perfil` |
+| `rol` | choices: ANA/INS/AUD | Analista, Inspector, Auditor. Default: ANA |
+| `telefono` | CharField(15), blank | |
+| `activo` | BooleanField, default=True | |
+| `created_at` | DateTimeField, auto_now_add | |
+| `updated_at` | DateTimeField, auto_now | |
+
+**Properties de `PerfilUsuario`:**
+- `es_analista` → `rol == 'ANA'`
+- `es_inspector` → `rol == 'INS'`
+- `es_auditor` → `rol == 'AUD'`
+- `usa_permisos_personalizados` → `True` si tiene registros en `PermisoModulo`
+- `tiene_permiso_modulo(modulo)` → verifica si tiene acceso al módulo dado
+- `get_modulos_permitidos()` → retorna set de módulos permitidos según rol o permisos personalizados
+
+**Módulos disponibles (`MODULOS_DISPONIBLES`):**
+`personas, estudios, domicilios, educacion, laboral, familia, referencias, economia, visitas, evaluacion, documentos, notificaciones, reportes, configuracion`
+
+**Permisos por rol (sin personalización):**
+| Rol | Módulos permitidos |
+|-----|-------------------|
+| ANA | Todos |
+| INS | `visitas, referencias, laboral, documentos, notificaciones` |
+| AUD | Todos |
+
+---
+
+**Modelo `PermisoModulo`** (FK a PerfilUsuario)
+
+| Campo | Tipo | Notas |
+|-------|------|-------|
+| `perfil` | FK → PerfilUsuario, CASCADE | |
+| `modulo` | choices: MODULOS_DISPONIBLES | |
+| `unique_together` | `(perfil, modulo)` | Sin duplicados |
+
+Cuando un perfil tiene registros en `PermisoModulo`, estos sobreescriben los permisos por rol.
+
+---
+
+**Middleware `ModuloPermisosMiddleware`** (`apps/usuarios/middleware.py`):
+- Intercepta cada request y verifica si la URL pertenece a un módulo protegido
+- `MODULO_POR_PREFIJO`: mapeo de prefijo URL → nombre de módulo
+- Rutas exentas: `/admin/`, `/accounts/`, `/candidato/`, `/usuarios/`, `/` (raíz)
+- Si el usuario no tiene permiso: retorna 403
+
+**Signals (`usuarios/signals.py`):**
+- `post_save` en `User`: auto-crea `PerfilUsuario` (rol=ANA) al crear un nuevo usuario
+
+**Mixins (`usuarios/mixins.py`):**
+- `RolRequeridoMixin` — base con lógica común
+- `AnalistaRequeridoMixin` — solo ANA
+- `InspectorRequeridoMixin` — ANA, INS
+- `AuditorRequeridoMixin` — ANA, AUD
+- `SuperusuarioRequeridoMixin` — solo superusuarios
+
+**Context Processor (`usuarios/context_processors.py`):**
+- Inyecta en todos los templates:
+  - `perfil_usuario` — instancia de PerfilUsuario
+  - `es_analista`, `es_inspector`, `es_auditor` — booleans
+  - `modulos_permitidos` — set de módulos a los que tiene acceso
+
+**Vistas (`usuarios/views.py`):**
+- `MiPerfilView` — `/usuarios/mi-perfil/`
+- `MiPerfilEditarView` — `/usuarios/mi-perfil/editar/`
+- `UsuarioListView` — `/usuarios/`
+- `CrearUsuarioView` — `/usuarios/crear/`
+- `UsuarioRolEditarView` — `/usuarios/<user_pk>/rol/`
+- `PermisosUsuarioView` — `/usuarios/<user_pk>/permisos/`
+
+**Formularios:** `PerfilUsuarioForm`, `CrearUsuarioForm`
+
+**Admin:** Inline de `PerfilUsuario` en admin de `User` + admin independiente de `PerfilUsuario`
+
+**Templates:** `usuario_list.html`, `usuario_create.html`, `perfil_form.html`, `mi_perfil.html`, `permisos_modulos.html`
+
+**URLs:** namespace `usuarios`
+
+---
+
+### 2.16 `auditorias`, `api` — Placeholders
 
 - **`auditorias`:** Sin urls.py propio — no está en `esteconom/urls.py`. Destinada a log de cambios con `post_save` signals.
 - **`api`:** Sin urls.py propio. Destinada a endpoints REST con Django REST Framework.
@@ -771,7 +961,7 @@ f"https://staticmap.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=16&si
 
 ## 3. Perfiles de Usuario y Casos de Uso
 
-El sistema actualmente usa el modelo `auth.User` estándar de Django sin diferenciación de roles. La siguiente sección define los perfiles funcionales que **deben implementarse** mediante grupos de Django (`django.contrib.auth.models.Group`) o un campo `rol` en un perfil extendido de usuario.
+El sistema usa `PerfilUsuario` (OneToOne con `auth.User`) con 3 roles y un sistema de permisos granular por módulo. Ver sección 2.15 para detalle técnico.
 
 ### 3.1 Colaborador Interno (Analista / Gestor)
 
@@ -883,16 +1073,18 @@ El sistema actualmente usa el modelo `auth.User` estándar de Django sin diferen
 - `templates/base.html` — badge HTMX polling cada 30s via `hx-get="/notificaciones/count/"`
 - Configuración de email vía variables de entorno en `settings.py`
 
-**✅ Fase 7 — Roles y control de acceso** *(Completada 2026-02-24)*
-- Nueva app `apps/usuarios/` con `PerfilUsuario` (OneToOne con `auth.User`, campos: `rol` ANA/INS, `telefono`, `activo`). Rol default: ANA. Properties: `es_analista`, `es_inspector`
-- `apps/usuarios/signals.py` — auto-crea `PerfilUsuario` (rol=ANA) al crear `auth.User`
-- `apps/usuarios/mixins.py` — `RolRequeridoMixin`, `AnalistaRequeridoMixin`, `InspectorRequeridoMixin`
-- `apps/usuarios/context_processors.py` — inyecta `perfil_usuario`, `es_analista`, `es_inspector`
-- `apps/usuarios/admin.py` — inline en el admin de User + admin independiente de `PerfilUsuario`
-- `apps/usuarios/views.py` — `MiPerfilView`, `MiPerfilEditarView`, `UsuarioListView`, `UsuarioRolEditarView`
-- `apps/usuarios/urls.py` — `/mi-perfil/`, `/mi-perfil/editar/`, `/`, `/<user_pk>/rol/`
-- Navbar actualizado: menú "Evaluaciones" y "Usuarios" solo visibles para analistas
-- Templates: `mi_perfil.html`, `perfil_form.html`, `usuario_list.html`
+**✅ Fase 7 — Roles y control de acceso** *(Completada 2026-02-24, ampliada después)*
+- `apps/usuarios/` — app completa con:
+  - `PerfilUsuario` (OneToOne con `auth.User`): roles ANA/INS/**AUD**, `telefono`, `activo`
+  - `PermisoModulo` — permisos granulares por módulo (sobreescriben permisos por rol)
+  - `ModuloPermisosMiddleware` — protege rutas por módulo automáticamente
+  - `signals.py` — auto-crea `PerfilUsuario` (rol=ANA) al crear `auth.User`
+  - `mixins.py` — `AnalistaRequeridoMixin`, `InspectorRequeridoMixin`, `AuditorRequeridoMixin`
+  - `context_processors.py` — inyecta `perfil_usuario`, `es_analista`, `es_inspector`, `es_auditor`, `modulos_permitidos`
+  - `admin.py` — inline en el admin de User + admin independiente de `PerfilUsuario`
+  - Vistas: `MiPerfilView`, `MiPerfilEditarView`, `UsuarioListView`, `CrearUsuarioView`, `UsuarioRolEditarView`, `PermisosUsuarioView`
+  - URLs: `/mi-perfil/`, `/mi-perfil/editar/`, `/`, `/crear/`, `/<user_pk>/rol/`, `/<user_pk>/permisos/`
+  - Templates: `mi_perfil.html`, `perfil_form.html`, `usuario_list.html`, `usuario_create.html`, `permisos_modulos.html`
 
 **✅ Fase 8 — Filtrado dinámico de documentos** *(Completada 2026-03-08)*
 - `apps/documentos/forms.py` — `DocumentoForm` con filtrado dinámico de estudios por persona (HTMX)
@@ -902,6 +1094,7 @@ El sistema actualmente usa el modelo `auth.User` estándar de Django sin diferen
 - `apps/documentos/views.py` — `EstudiosPorPersonaView` (retorna `<option>` tags filtradas)
   - `DocumentoCreateView.form_valid` auto-llena `tamaño` y `nombre_archivo` desde el archivo subido
 - `apps/documentos/urls.py` — nueva URL `documentos/estudios-por-persona/`
+- Tipos de foto especializados: FSE (selfie), FFA/FFR/FIZ/FDE/FDI (fotos domicilio), FOT (general)
 
 ### 4.3 Colores de estado para badges (Tailwind)
 
@@ -1068,10 +1261,11 @@ def form_valid(self, form):
 | 17 | Notificaciones automáticas con `post_save` signals | ✅ Completada | Automatización |
 | 18 | Badge de notificaciones HTMX en navbar | ✅ Completada | UX |
 | 19 | Filtrado dinámico documentos por persona (HTMX) | ✅ Completada | UX Documentos |
-| 20 | `apps/auditorias` — modelo y signals | ⬜ Pendiente | Trazabilidad |
-| 21 | `apps/api` — endpoints REST con DRF | ⬜ Pendiente | Integraciones |
-| 22 | Tests automatizados para modelos y vistas | ⬜ Pendiente | Calidad |
-| 23 | Race condition en folio (`select_for_update`) | ⬜ Pendiente | Producción |
+| 20 | Sistema de roles con PermisoModulo granular | ✅ Completada | Multi-perfil |
+| 21 | `apps/auditorias` — modelo y signals | ⬜ Pendiente | Trazabilidad |
+| 22 | `apps/api` — endpoints REST con DRF | ⬜ Pendiente | Integraciones |
+| 23 | Tests automatizados para modelos y vistas | ⬜ Pendiente | Calidad |
+| 24 | Race condition en folio (`select_for_update`) | ⬜ Pendiente | Producción |
 
 ---
 
@@ -1164,6 +1358,11 @@ path('api/', include('apps.api.urls')),
 | `DEBUG` | No | `False` | Modo depuración |
 | `ALLOWED_HOSTS` | No | `localhost` | Hosts permitidos (CSV) |
 | `DATABASE_URL` | No | SQLite local | URL de conexión PostgreSQL |
+| `USE_SPACES` | No | `False` | Activar S3/Digital Ocean Spaces para archivos |
+| `AWS_ACCESS_KEY_ID` | Si (Spaces) | — | Access key del bucket S3/Spaces |
+| `AWS_SECRET_ACCESS_KEY` | Si (Spaces) | — | Secret key del bucket S3/Spaces |
+| `AWS_STORAGE_BUCKET_NAME` | Si (Spaces) | — | Nombre del bucket |
+| `AWS_S3_REGION_NAME` | Si (Spaces) | — | Región del bucket |
 
 Archivo `.env` de ejemplo:
 ```env
@@ -1200,4 +1399,17 @@ https://docs.google.com/forms/d/e/1FAIpQLSc75Ncb7ON5zEtl2m8kBHuH971DDD7VGQREtdRf
 
 ---
 
-*Versión 1.5 — actualizado el 2026-03-08 tras: agregar modelo `EmpresaCliente` (configuracion), documentar campo `secciones` JSONField en `TipoEstudio`, corregir `TRANSICIONES_VALIDAS` reales (COM→solo REV, REV→solo APR/REC, REC→BOR), documentar properties `completado`/`expirado` en `EstudioToken`, agregar campos `telefono`/`activo`/`UsuarioRolEditarView` en Fase 7, y documentar Fase 8 (filtrado dinámico documentos con HTMX + auto-llenado de tamaño/nombre_archivo).*
+---
+
+## Historial de Cambios
+
+| Versión | Fecha | Cambios |
+|---------|-------|---------|
+| 1.0 | 2026-02-22 | Versión inicial — modelos, fases 1-2 |
+| 1.1 | 2026-02-22 | Fase 3 (portal candidato), EstudioToken |
+| 1.2 | 2026-02-23 | Fase 4 (inspector campo), Fase 5 (PDF) |
+| 1.3 | 2026-02-24 | Fase 6 (notificaciones), Fase 7 (roles ANA/INS) |
+| 1.4 | 2026-03-08 | EmpresaCliente, secciones JSONField, corrección TRANSICIONES_VALIDAS |
+| 1.5 | 2026-03-08 | Fase 8 (HTMX documentos), EstudioToken properties, UsuarioRolEditarView |
+| 2.1 | 2026-04-09 | Geolocalización en cascada para croquis del reporte: 3 fuentes (visita → domicilio → Nominatim geocodificado). `_geocodificar_nominatim()`, `_construir_mapa_url()`, `origen_coordenadas` en contexto PDF. Template actualizado con nota de origen. |
+| **2.0** | **2026-04-09** | **Análisis completo del estado real del código:** GPS en Domicilio (latitud/longitud, observaciones_inmueble), comentarios_colonos en VisitaDomiciliaria, campos de verificación en Referencia (actividad_tiempo_libre/lugares_laborado/conducta/cualidades), tipos de foto en Documento (FSE/FFA/FFR/FIZ/FDE/FDI), FOTOS_TIPOS frozenset y property es_foto, PermisoModulo y rol AUD en usuarios, ModuloPermisosMiddleware, PermisosUsuarioView/CrearUsuarioView, settings documentados (middleware/context processors/storage), nueva sección 1.5 configuración del proyecto, nueva sección 2.15 usuarios, protocolo de actualización obligatorio. |

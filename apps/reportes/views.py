@@ -1,4 +1,7 @@
 import io
+import json
+import urllib.parse
+import urllib.request
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse
@@ -11,6 +14,46 @@ from apps.estudios.models import EstudioSocioeconomico
 
 # Estados en los que el PDF puede generarse
 ESTADOS_PERMITIDOS = ('COM', 'REV', 'APR', 'REC')
+
+
+def _geocodificar_nominatim(domicilio):
+    """
+    Geocodifica un Domicilio usando Nominatim (OpenStreetMap).
+    Gratuito, sin API key. Retorna (lat, lon) como floats, o (None, None).
+    """
+    query = (
+        f"{domicilio.calle} {domicilio.numero_exterior}, "
+        f"{domicilio.colonia}, {domicilio.municipio}, "
+        f"{domicilio.estado}, México"
+    )
+    params = urllib.parse.urlencode({
+        'q': query,
+        'format': 'json',
+        'limit': 1,
+        'countrycodes': 'mx',
+    })
+    url = f"https://nominatim.openstreetmap.org/search?{params}"
+    req = urllib.request.Request(
+        url,
+        headers={'User-Agent': 'EstudioEcoNom/2.0 (sistema interno)'}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            data = json.loads(resp.read().decode())
+            if data:
+                return float(data[0]['lat']), float(data[0]['lon'])
+    except Exception:
+        pass
+    return None, None
+
+
+def _construir_mapa_url(lat, lon):
+    """Genera URL de mapa estático OpenStreetMap a partir de coordenadas."""
+    return (
+        f"https://staticmap.openstreetmap.de/staticmap.php"
+        f"?center={lat},{lon}&zoom=16&size=600x300"
+        f"&markers={lat},{lon},red-pushpin"
+    )
 
 
 def _get_contexto_pdf(estudio):
@@ -68,16 +111,31 @@ def _get_contexto_pdf(estudio):
     # Empresa cliente
     empresa = estudio.empresa_cliente
 
-    # URL de mapa estático OpenStreetMap (gratuito, sin API key)
+    # ─── GEOLOCALIZACIÓN PARA EL CROQUIS (3 fuentes en cascada) ─────────────
+    # Fuente 1: visita domiciliaria con GPS (más preciso — inspector en el lugar)
     mapa_url = None
+    origen_coordenadas = None
+
     if visita_principal and visita_principal.latitud and visita_principal.longitud:
         lat = float(visita_principal.latitud)
         lon = float(visita_principal.longitud)
-        mapa_url = (
-            f"https://staticmap.openstreetmap.de/staticmap.php"
-            f"?center={lat},{lon}&zoom=16&size=600x300"
-            f"&markers={lat},{lon},red-pushpin"
-        )
+        mapa_url = _construir_mapa_url(lat, lon)
+        origen_coordenadas = 'visita'
+
+    # Fuente 2: coordenadas guardadas en el domicilio (capturadas por el candidato en paso_2)
+    elif domicilio_actual and domicilio_actual.latitud and domicilio_actual.longitud:
+        lat = float(domicilio_actual.latitud)
+        lon = float(domicilio_actual.longitud)
+        mapa_url = _construir_mapa_url(lat, lon)
+        origen_coordenadas = 'domicilio'
+
+    # Fuente 3: geocodificación desde la dirección vía Nominatim (OpenStreetMap, sin API key)
+    elif domicilio_actual:
+        lat, lon = _geocodificar_nominatim(domicilio_actual)
+        if lat and lon:
+            mapa_url = _construir_mapa_url(lat, lon)
+            origen_coordenadas = 'geocodificado'
+    # ─────────────────────────────────────────────────────────────────────────
 
     return {
         'estudio': estudio,
@@ -97,6 +155,7 @@ def _get_contexto_pdf(estudio):
         'foto_selfie': foto_selfie,
         'fotos': fotos,
         'mapa_url': mapa_url,
+        'origen_coordenadas': origen_coordenadas,  # 'visita' | 'domicilio' | 'geocodificado' | None
         'fecha_generacion': timezone.now(),
     }
 
