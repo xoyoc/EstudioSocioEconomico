@@ -66,7 +66,7 @@ class SituacionEconomica(models.Model):
     # Cuenta bancaria
     institucion_bancaria = models.CharField(
         max_length=100, blank=True,
-        verbose_name='Institución bancaria (tarjeta de débito)'
+        verbose_name='Institución bancaria (tarjeta de débito o crédito)'
     )
     afore = models.CharField(
         max_length=100, blank=True,
