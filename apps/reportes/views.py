@@ -56,8 +56,14 @@ def _get_contexto_pdf(estudio):
     except Exception:
         evaluacion = None
 
-    # Documentos tipo FOT (fotos)
-    fotos = estudio.documentos.filter(tipo='FOT').select_related('persona')
+    # Fotos: busca por persona (el FK estudio puede ser null)
+    from apps.documentos.models import Documento
+    FOTOS_TIPOS = list(Documento.FOTOS_TIPOS)
+    fotos_qs = Documento.objects.filter(
+        persona=persona, tipo__in=FOTOS_TIPOS
+    ).order_by('tipo', 'created_at')
+    foto_selfie = fotos_qs.filter(tipo='FSE').first()
+    fotos = fotos_qs.exclude(tipo='FSE')
 
     # Empresa cliente
     empresa = estudio.empresa_cliente
@@ -88,6 +94,7 @@ def _get_contexto_pdf(estudio):
         'visitas': visitas,
         'visita_principal': visita_principal,
         'evaluacion': evaluacion,
+        'foto_selfie': foto_selfie,
         'fotos': fotos,
         'mapa_url': mapa_url,
         'fecha_generacion': timezone.now(),

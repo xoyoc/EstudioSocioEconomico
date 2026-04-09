@@ -142,17 +142,15 @@
 
     {# --- FOTO DEL CANDIDATO --- #}
     <div class="col-foto">
-      {% with foto_candidato=fotos|first %}
-        {% if foto_candidato %}
-          <img src="{{ foto_candidato.archivo.url }}"
-               alt="Foto de {{ persona.nombre_completo }}"
-               class="portada-foto-candidato">
-        {% else %}
-          <div style="width:5cm; height:6cm; border:2px dashed #ddd; text-align:center; padding-top:40%; font-size:8pt; color:#999;">
-            Sin fotografía
-          </div>
-        {% endif %}
-      {% endwith %}
+      {% if foto_selfie %}
+        <img src="{{ foto_selfie.archivo.url }}"
+             alt="Foto de {{ persona.nombre_completo }}"
+             class="portada-foto-candidato">
+      {% else %}
+        <div style="width:5cm; height:6cm; border:2px dashed #ddd; text-align:center; padding-top:40%; font-size:8pt; color:#999;">
+          Sin fotografía
+        </div>
+      {% endif %}
       <div style="font-size:7.5pt; color:#888; margin-top:4pt; text-align:center;">
         {{ persona.get_tipo_identificacion_display|default:"" }}
         {% if persona.numero_identificacion %}
