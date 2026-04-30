@@ -37,6 +37,11 @@ class EvaluacionRiesgoCreateView(LoginRequiredMixin, CreateView):
             initial['estudio'] = estudio_pk
         return initial
 
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['estudio_pk_ia'] = self.request.GET.get('estudio') or self.request.GET.get('back')
+        return ctx
+
     def get_success_url(self):
         back = self.request.GET.get('back')
         if back:
@@ -60,6 +65,11 @@ class EvaluacionRiesgoUpdateView(LoginRequiredMixin, UpdateView):
         'factores_riesgo', 'factores_atenuantes', 'recomendacion_final',
     ]
     success_url = reverse_lazy('evaluacion:evaluacionriesgo_list')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['estudio_pk_ia'] = self.object.estudio.pk
+        return ctx
 
     def get_success_url(self):
         back = self.request.GET.get('back')

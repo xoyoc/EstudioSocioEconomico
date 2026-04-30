@@ -172,7 +172,30 @@
 
     <!-- Factores y recomendación -->
     <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-5">
-      <h2 class="text-sm font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-100">Análisis cualitativo</h2>
+      <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+        <h2 class="text-sm font-semibold text-gray-800">Análisis cualitativo</h2>
+        {% if estudio_pk_ia %}
+        <button type="button"
+                id="btn-sugerir-ia"
+                onclick="sugerirEvaluacionIA()"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg transition-colors shadow-sm"
+                style="background-color: var(--meraki-purple);"
+                onmouseover="this.style.backgroundColor='var(--meraki-purple-dark)'"
+                onmouseout="this.style.backgroundColor='var(--meraki-purple)'">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.347.347a3.75 3.75 0 01-5.303 0l-.097-.097a3.75 3.75 0 010-5.303"/>
+          </svg>
+          <span id="btn-ia-eval-texto">Sugerir con IA</span>
+        </button>
+        {% endif %}
+      </div>
+
+      <div id="ia-eval-error" class="hidden mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-xs text-red-700"></div>
+      <div id="ia-eval-info" class="hidden mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
+        Sugerencias cargadas. Revisa y ajusta los valores antes de guardar.
+      </div>
+
       <div class="space-y-0">
         {% include 'components/form_field.html' with field=form.factores_riesgo %}
         {% include 'components/form_field.html' with field=form.factores_atenuantes %}
@@ -257,5 +280,72 @@ categorias.forEach(function(cat) {
 });
 
 document.addEventListener('DOMContentLoaded', calcularScore);
+
+// ── Sugerir evaluación con IA ────────────────────────────────────────────────
+{% if estudio_pk_ia %}
+function sugerirEvaluacionIA() {
+  var btn = document.getElementById('btn-sugerir-ia');
+  var txtBtn = document.getElementById('btn-ia-eval-texto');
+  var elError = document.getElementById('ia-eval-error');
+  var elInfo = document.getElementById('ia-eval-info');
+
+  btn.disabled = true;
+  txtBtn.textContent = 'Analizando…';
+  btn.style.backgroundColor = '#9ca3af';
+  elError.classList.add('hidden');
+  elInfo.classList.add('hidden');
+
+  fetch('/estudios/{{ estudio_pk_ia }}/evaluar-ia/', {
+    method: 'POST',
+    headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/json'},
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(datos) {
+    btn.disabled = false;
+    txtBtn.textContent = 'Sugerir con IA';
+    btn.style.backgroundColor = 'var(--meraki-purple)';
+
+    if (datos.ok) {
+      // Actualizar sliders con las puntuaciones sugeridas
+      var mapa = {
+        'identificacion': datos.puntuacion_identificacion,
+        'domicilio': datos.puntuacion_domicilio,
+        'laboral': datos.puntuacion_laboral,
+        'economica': datos.puntuacion_economica,
+        'crediticia': datos.puntuacion_crediticia,
+        'referencias': datos.puntuacion_referencias,
+      };
+      Object.keys(mapa).forEach(function(cat) {
+        var slider = document.getElementById('id_puntuacion_' + cat);
+        var display = document.getElementById('val-' + cat);
+        if (slider && mapa[cat] !== undefined) {
+          slider.value = mapa[cat];
+          if (display) display.textContent = mapa[cat];
+        }
+      });
+      calcularScore();
+
+      // Llenar textareas
+      var campos = ['factores_riesgo', 'factores_atenuantes', 'recomendacion_final'];
+      campos.forEach(function(campo) {
+        var el = document.getElementById('id_' + campo);
+        if (el && datos[campo]) el.value = datos[campo];
+      });
+
+      elInfo.classList.remove('hidden');
+    } else {
+      elError.textContent = datos.error || 'Ocurrió un error al analizar.';
+      elError.classList.remove('hidden');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    txtBtn.textContent = 'Sugerir con IA';
+    btn.style.backgroundColor = 'var(--meraki-purple)';
+    elError.textContent = 'Error de conexión. Intenta de nuevo.';
+    elError.classList.remove('hidden');
+  });
+}
+{% endif %}
 </script>
 {% endblock %}

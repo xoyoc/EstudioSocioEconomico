@@ -201,6 +201,9 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@meraki-consul
 GOOGLE_MAPS_API_KEY = config('GOOGLE_MAPAS_API_KEY', default='')
 MAPBOX_API_KEY = config('MAPBOX_API_KEY', default='')
 
+# Integración con DigitalOcean AI Platform (Gradient)
+DO_MODEL_ACCESS_KEY = config('DO_MODEL_ACCESS_KEY', default='')
+
 # Static files — WhiteNoise para producción (solo cuando NO se usa Spaces)
 if not USE_SPACES:
     STORAGES = {

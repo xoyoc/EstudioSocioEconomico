@@ -1,7 +1,7 @@
 # Documento de Contexto Arquitectónico — EstudioEcoNom
 
-**Versión:** 2.0
-**Fecha:** 2026-04-09
+**Versión:** 2.3
+**Fecha:** 2026-04-27
 **Proyecto:** Sistema de Gestión de Estudios Socioeconómicos (EstudioEcoNom)
 **Stack:** Django 6.0.2 · SQLite/PostgreSQL · Tailwind CSS CDN · WeasyPrint · Python 3.x
 **Idioma:** Español mexicano (`es-mx`) · Zona horaria: `America/Mexico_City`
@@ -816,6 +816,62 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 
 ---
 
+### 2.14b `estudios/views_ia.py` — Integración con DigitalOcean AI Platform
+
+**Propósito:** Genera análisis automáticos del estudio y sugerencias de evaluación de riesgo usando DigitalOcean AI (API compatible con OpenAI).
+
+**Dependencia:** `openai` (v2.x) en `requirements.txt`. `DO_MODEL_ACCESS_KEY` en `.env` y `settings.py`.
+**Endpoint:** `https://inference.do-ai.run/v1` (OpenAI-compatible).
+**Modelo activo:** `meta-llama/Llama-4-Maverick-17B-128E-Instruct`
+**Modelos disponibles en la key:**
+- `meta-llama/Llama-4-Maverick-17B-128E-Instruct`
+- `meta-llama/Llama-3.3-70B-Instruct`
+- `deepseek-ai/DeepSeek-V3`
+- `deepseek-ai/DeepSeek-R1-Distill-Llama-70B`
+
+**Función auxiliar `_recopilar_datos_estudio(estudio)`:**
+Reúne toda la información del estudio en texto estructurado para el prompt. Incluye: datos personales, domicilio, educación, idiomas, salud, historial laboral, grupo familiar, situación económica, referencias, visita domiciliaria.
+
+**Vista `AnalizarEstudioIAView`** (`POST /estudios/<pk>/analizar-ia/`)
+- Recopila datos del estudio
+- Llama al modelo con prompt en español mexicano vía `client.chat.completions.create()`
+- **Guarda** en BD: `EstudioSocioeconomico.aspectos_positivos`, `aspectos_negativos`, `conclusion`
+- Retorna JSON: `{ok, aspectos_positivos, aspectos_negativos, conclusion}`
+- El template actualiza el DOM sin recargar la página
+
+**Vista `SugerirEvaluacionIAView`** (`POST /estudios/<pk>/evaluar-ia/`)
+- Recopila datos del estudio
+- Llama al modelo con prompt de evaluación de riesgo vía `client.chat.completions.create()`
+- **No guarda** — retorna sugerencias para que el usuario las revise y ajuste
+- Retorna JSON: `{ok, puntuacion_identificacion, puntuacion_domicilio, puntuacion_laboral, puntuacion_economica, puntuacion_crediticia, puntuacion_referencias, factores_riesgo, factores_atenuantes, recomendacion_final}`
+- El template pre-llena los 6 sliders + 3 textareas del formulario de evaluación
+
+**URLs registradas en `apps/estudios/urls.py`:**
+- `estudios:analizar_ia` → `POST /estudios/<pk>/analizar-ia/`
+- `estudios:evaluar_ia` → `POST /estudios/<pk>/evaluar-ia/`
+
+**Modelo activo:** `meta-llama/Llama-4-Maverick-17B-128E-Instruct` — configurable en `DO_AI_MODEL` en `views_ia.py`.
+
+**Manejo de errores:** captura `openai.APIError` y `json.JSONDecodeError`, retorna JSON con clave `error`.
+
+**Cambios en `apps/evaluacion/views.py`:**
+- `EvaluacionRiesgoCreateView.get_context_data` → pasa `estudio_pk_ia` desde `?estudio=` o `?back=` en la URL
+- `EvaluacionRiesgoUpdateView.get_context_data` → pasa `estudio_pk_ia` desde `self.object.estudio.pk`
+
+**Cambios en `templates/estudios/estudio_detail.html`:**
+- Secciones de Aspectos Positivos, Negativos y Conclusiones siempre visibles (sin `{% if %}` condicional)
+- IDs añadidos: `ia-aspectos-positivos`, `ia-aspectos-negativos`, `ia-conclusion`
+- Botón "Analizar con IA" + función JS `analizarConIA()` con fetch + feedback de éxito/error
+
+**Cambios en `templates/evaluacion/evaluacionriesgo_form.html`:**
+- Botón "Sugerir con IA" (visible solo si `estudio_pk_ia` está en contexto)
+- Función JS `sugerirEvaluacionIA()` que actualiza sliders y textareas + recalcula score
+
+**Cambio en `templates/reportes/_pdf_croquis.html`:**
+- Eliminado el bloque `{% else %}` que mostraba "No se encontraron datos de visita domiciliaria registrados en el sistema." — ahora simplemente no aparece ningún mensaje cuando no hay visita.
+
+---
+
 ### 2.14 `reportes` — Generación de Reportes PDF
 
 **Propósito:** Genera el reporte PDF final del estudio socioeconómico idéntico al formato de referencia de Meraki (8 páginas).
@@ -836,12 +892,16 @@ POST /estudios/<pk>/regenerar-token/ → RegenerarTokenView (login requerido)
 
 El contexto incluye `origen_coordenadas` (`'visita'|'domicilio'|'geocodificado'|None`) para mostrar nota aclaratoria en el PDF.
 
-**Funciones auxiliares:** `_geocodificar_nominatim(domicilio)` y `_construir_mapa_url(lat, lon)`.
+**Funciones auxiliares:**
+- `_geocodificar_nominatim(domicilio)` — geocodifica la dirección vía Nominatim si no hay GPS
+- `_url_mapa(lat, lon)` — construye la URL del mapa estático según servicio disponible; retorna `(url, proveedor)`
+- `_descargar_imagen_mapa(lat, lon)` — descarga el mapa y lo retorna como data URL base64 para que WeasyPrint no haga peticiones externas al renderizar
+- `_get_contexto_pdf(estudio)` — centraliza la recolección de datos para los templates
 
-**URL del mapa estático (sin API key):**
-```python
-f"https://staticmap.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=16&size=600x300&markers={lat},{lon},red-pushpin"
-```
+**Prioridad de proveedor de mapa** (lógica en `_url_mapa`):
+1. Google Maps Static API (si `GOOGLE_MAPS_API_KEY` definida)
+2. Mapbox Static Images API (si `MAPBOX_API_KEY` definida)
+3. OpenStreetMap sin key: `https://staticmap.openstreetmap.de/staticmap.php?center={lat},{lon}&zoom=16&size=600x300&markers={lat},{lon},red-pushpin`
 
 **Templates (`templates/reportes/`):**
 
@@ -1086,6 +1146,18 @@ El sistema usa `PerfilUsuario` (OneToOne con `auth.User`) con 3 roles y un siste
   - URLs: `/mi-perfil/`, `/mi-perfil/editar/`, `/`, `/crear/`, `/<user_pk>/rol/`, `/<user_pk>/permisos/`
   - Templates: `mi_perfil.html`, `perfil_form.html`, `usuario_list.html`, `usuario_create.html`, `permisos_modulos.html`
 
+**✅ Fase 9 — Integración de IA con DigitalOcean AI** *(Completada 2026-04-27, migrado a DO AI 2026-04-30)*
+- `apps/estudios/views_ia.py` — dos vistas JSON (usa `openai` SDK con endpoint DO: `https://inference.do-ai.run/v1`, modelo: `meta-llama/Llama-4-Maverick-17B-128E-Instruct`):
+  - `AnalizarEstudioIAView` (`POST /estudios/<pk>/analizar-ia/`) — genera y guarda `aspectos_positivos`, `aspectos_negativos`, `conclusion` en `EstudioSocioeconomico`
+  - `SugerirEvaluacionIAView` (`POST /estudios/<pk>/evaluar-ia/`) — sugiere 6 puntuaciones + `factores_riesgo`, `factores_atenuantes`, `recomendacion_final` sin guardar (usuario revisa y ajusta)
+- `apps/estudios/urls.py` — rutas `analizar_ia` y `evaluar_ia`
+- `apps/evaluacion/views.py` — `get_context_data` en Create/UpdateView pasa `estudio_pk_ia` al template
+- `templates/estudios/estudio_detail.html` — botón "Analizar con IA" en sección Conclusiones, secciones de aspectos/conclusiones siempre visibles, JS `analizarConIA()` actualiza DOM sin recargar
+- `templates/evaluacion/evaluacionriesgo_form.html` — botón "Sugerir con IA", JS `sugerirEvaluacionIA()` pre-llena sliders y textareas
+- `requirements.txt` — `openai` (v2.x) — reemplazó a `anthropic`
+- `esteconom/settings.py` — `DO_MODEL_ACCESS_KEY = config('DO_MODEL_ACCESS_KEY', default='')` — reemplazó a `ANTHROPIC_API_KEY`
+- `templates/reportes/_pdf_croquis.html` — eliminado mensaje "No se encontraron datos de visita domiciliaria" cuando no hay visita registrada
+
 **✅ Fase 8 — Filtrado dinámico de documentos** *(Completada 2026-03-08)*
 - `apps/documentos/forms.py` — `DocumentoForm` con filtrado dinámico de estudios por persona (HTMX)
   - Al cambiar persona: `hx-get="/documentos/estudios-por-persona/"` recarga solo estudios de esa persona
@@ -1266,6 +1338,7 @@ def form_valid(self, form):
 | 22 | `apps/api` — endpoints REST con DRF | ⬜ Pendiente | Integraciones |
 | 23 | Tests automatizados para modelos y vistas | ⬜ Pendiente | Calidad |
 | 24 | Race condition en folio (`select_for_update`) | ⬜ Pendiente | Producción |
+| 25 | Integración IA — análisis conclusiones y evaluación de riesgo | ✅ Completada | IA |
 
 ---
 
@@ -1360,6 +1433,7 @@ path('api/', include('apps.api.urls')),
 | `DATABASE_URL` | No | SQLite local | URL de conexión PostgreSQL |
 | `GOOGLE_MAPAS_API_KEY` | No | `''` | API key de Google Maps Static API (croquis PDF) |
 | `MAPBOX_API_KEY` | No | `''` | Access token de Mapbox Static Images (croquis PDF) |
+| `ANTHROPIC_API_KEY` | No | `''` | API key de Anthropic para análisis IA con Claude Haiku |
 | `USE_SPACES` | No | `False` | Activar S3/Digital Ocean Spaces para archivos |
 | `AWS_ACCESS_KEY_ID` | Si (Spaces) | — | Access key del bucket S3/Spaces |
 | `AWS_SECRET_ACCESS_KEY` | Si (Spaces) | — | Secret key del bucket S3/Spaces |
@@ -1377,6 +1451,9 @@ ALLOWED_HOSTS=localhost,127.0.0.1
 # Elige UNO (prioridad: Google > Mapbox > OpenStreetMap sin key)
 # GOOGLE_MAPS_API_KEY=AIzaSy...
 # MAPBOX_API_KEY=pk.eyJ1...
+
+# IA — Análisis automático con Claude (Anthropic)
+ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
 ---
@@ -1418,5 +1495,7 @@ https://docs.google.com/forms/d/e/1FAIpQLSc75Ncb7ON5zEtl2m8kBHuH971DDD7VGQREtdRf
 | 1.3 | 2026-02-24 | Fase 6 (notificaciones), Fase 7 (roles ANA/INS) |
 | 1.4 | 2026-03-08 | EmpresaCliente, secciones JSONField, corrección TRANSICIONES_VALIDAS |
 | 1.5 | 2026-03-08 | Fase 8 (HTMX documentos), EstudioToken properties, UsuarioRolEditarView |
+| 2.3 | 2026-04-27 | **Discrepancia corregida:** funciones auxiliares en `apps/reportes/views.py` — nombre real `_url_mapa` y `_descargar_imagen_mapa` (antes documentado incorrectamente como `_construir_mapa_url`). Creado `plan_final.md` con plan detallado para tareas 21-24. |
+| 2.2 | 2026-04-27 | **Fase 9 — Integración IA con Claude:** `apps/estudios/views_ia.py` (AnalizarEstudioIAView + SugerirEvaluacionIAView), URLs `analizar_ia`/`evaluar_ia`, botón "Analizar con IA" en estudio_detail, botón "Sugerir con IA" en evaluacionriesgo_form, `anthropic` en requirements.txt, `ANTHROPIC_API_KEY` en settings. **Fix PDF:** eliminado mensaje de ausencia de visita en `_pdf_croquis.html`. Sección 2.14b añadida. |
 | 2.1 | 2026-04-09 | Geolocalización en cascada para croquis del reporte: 3 fuentes (visita → domicilio → Nominatim geocodificado). `_geocodificar_nominatim()`, `_construir_mapa_url()`, `origen_coordenadas` en contexto PDF. Template actualizado con nota de origen. |
 | **2.0** | **2026-04-09** | **Análisis completo del estado real del código:** GPS en Domicilio (latitud/longitud, observaciones_inmueble), comentarios_colonos en VisitaDomiciliaria, campos de verificación en Referencia (actividad_tiempo_libre/lugares_laborado/conducta/cualidades), tipos de foto en Documento (FSE/FFA/FFR/FIZ/FDE/FDI), FOTOS_TIPOS frozenset y property es_foto, PermisoModulo y rol AUD en usuarios, ModuloPermisosMiddleware, PermisosUsuarioView/CrearUsuarioView, settings documentados (middleware/context processors/storage), nueva sección 1.5 configuración del proyecto, nueva sección 2.15 usuarios, protocolo de actualización obligatorio. |
