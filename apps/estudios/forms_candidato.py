@@ -89,7 +89,7 @@ class Paso3EducacionForm(forms.ModelForm):
     """Paso 3a — Registro de nivel educativo."""
     class Meta:
         model = Educacion
-        exclude = ['persona', 'documento_verificado', 'created_at', 'updated_at', 'created_by', 'updated_by']
+        fields = ['nivel', 'institucion', 'titulo', 'estado', 'anio_inicio', 'anio_fin']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

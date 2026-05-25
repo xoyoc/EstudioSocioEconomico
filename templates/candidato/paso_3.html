@@ -382,3 +382,47 @@
   </form>
 </div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var CAMPOS_EDUC = ['nivel', 'institucion', 'titulo', 'anio_inicio', 'anio_fin', 'estado'];
+
+  var formEduc = null;
+  document.querySelectorAll('form').forEach(function (f) {
+    var hidden = f.querySelector('[name="accion"][value="guardar_educacion"]');
+    if (hidden) formEduc = f;
+  });
+
+  function educacionTieneDatos() {
+    if (!formEduc) return false;
+    return CAMPOS_EDUC.some(function (campo) {
+      var el = formEduc.querySelector('[name="' + campo + '"]');
+      return el && el.value && el.value.trim() !== '' && el.value !== '0';
+    });
+  }
+
+  var formSalud = null;
+  document.querySelectorAll('form').forEach(function (f) {
+    var hidden = f.querySelector('[name="accion"][value="guardar_salud"]');
+    if (hidden) formSalud = f;
+  });
+
+  if (formSalud) {
+    formSalud.addEventListener('submit', function (e) {
+      if (educacionTieneDatos()) {
+        var confirmar = window.confirm(
+          'Tienes datos de educación sin guardar.\n\n' +
+          'Haz clic en "Agregar educación" antes de continuar para no perder esa información.\n\n' +
+          '¿Deseas continuar de todas formas sin guardar la educación?'
+        );
+        if (!confirmar) {
+          e.preventDefault();
+          if (formEduc) formEduc.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}
